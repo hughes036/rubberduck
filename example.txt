@@ -1,0 +1,7 @@
+MIDI_HEADER|divisionType=0.0|resolution=480
+TRACKS|count=1
+TRACK|number=0|events=4
+EVENT|tick=0|type=ShortMessage|command=192|channel=0|data1=0|data2=0|description=PROGRAM_CHANGE|program=0
+EVENT|tick=0|type=ShortMessage|command=144|channel=0|data1=60|data2=100|description=NOTE_ON|note=60|velocity=100
+EVENT|tick=960|type=ShortMessage|command=128|channel=0|data1=60|data2=0|description=NOTE_OFF|note=60|velocity=0
+EVENT|tick=960|type=MetaMessage|metaType=47

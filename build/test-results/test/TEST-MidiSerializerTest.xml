@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="MidiSerializerTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2025-06-15T19:15:21" hostname="OSXLTH0W564" time="0.028">
+  <properties/>
+  <testcase name="Test serializing a MIDI file and then deserializing it back" classname="MidiSerializerTest" time="0.017"/>
+  <testcase name="Test deserializing a serialized MIDI sequence" classname="MidiSerializerTest" time="0.002"/>
+  <testcase name="Test MidiUtils methods" classname="MidiSerializerTest" time="0.004"/>
+  <testcase name="Test serializing a MIDI sequence" classname="MidiSerializerTest" time="0.002"/>
+  <testcase name="Test deserializing an invalid format" classname="MidiSerializerTest" time="0.002"/>
+  <system-out><![CDATA[Serialized MIDI data sample:
+MIDI_HEADER|divisionType=0.0|resolution=480
+TRACKS|count=1
+TRACK|number=0|events=4
+EVENT|tick=0|type=ShortMessage|command=192|channel=0|data1=0|data2=0|description=PROGRAM_CHANGE|program=0
+EVENT|tick=...
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
