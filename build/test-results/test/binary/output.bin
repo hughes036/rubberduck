@@ -1,6 +1,0 @@
-Serialized MIDI data sample:
-,MIDI_HEADER|divisionType=0.0|resolution=480
-TRACKS|count=1
-TRACK|number=0|events=4
-jEVENT|tick=0|type=ShortMessage|command=192|channel=0|data1=0|data2=0|description=PROGRAM_CHANGE|program=0
-EVENT|tick=...
