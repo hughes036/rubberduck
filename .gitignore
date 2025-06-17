@@ -1,7 +1,41 @@
+### Gradle ###
+.gradle/
+build/
+gradle-app.setting
+.gradletasknamecache
+**/build/
+# Exclude gradle wrapper
+!gradle/wrapper/
+!gradlew
+!gradlew.bat
+
+### Generated Files ###
+/*.mid
+/*.txt
+
+### Java ###
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+# Exclude gradle wrapper jar
+!gradle/wrapper/gradle-wrapper.jar
+
 ### IntelliJ IDEA ###
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+.idea/
+*.iml
+*.iws
+*.ipr
+*.iws
+.idea_modules/
 
 ### Eclipse ###
 .apt_generated
