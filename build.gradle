@@ -15,6 +15,13 @@ repositories {
 }
 
 dependencies {
+    // HTTP client for API calls
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+
+    // JSON processing
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Testing
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }

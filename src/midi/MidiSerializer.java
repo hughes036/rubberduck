@@ -11,7 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MidiSerializer {
-    
+
+    // Delimiters for the serialized MIDI format
+    public static final String MIDI_START_DELIMITER = "<<MIDI_START>>";
+    public static final String MIDI_END_DELIMITER = "<<MIDI_END>>";
+
     /**
      * Converts a MIDI file to a serialized text format.
      * 
@@ -24,7 +28,7 @@ public class MidiSerializer {
         Sequence sequence = MidiSystem.getSequence(midiFile);
         return serializeSequence(sequence);
     }
-    
+
     /**
      * Converts a MIDI Sequence object to a serialized text format.
      * 
@@ -33,40 +37,43 @@ public class MidiSerializer {
      */
     public static String serializeSequence(Sequence sequence) {
         StringBuilder serialized = new StringBuilder();
-        
+
+        // Add start delimiter
+        serialized.append(MIDI_START_DELIMITER).append("\n");
+
         // Add header information
         float divisionType = sequence.getDivisionType();
         serialized.append("MIDI_HEADER|divisionType=").append(divisionType);
         serialized.append("|resolution=").append(sequence.getResolution()).append("\n");
-        
+
         // Process all tracks
         Track[] tracks = sequence.getTracks();
         serialized.append("TRACKS|count=").append(tracks.length).append("\n");
-        
+
         for (int t = 0; t < tracks.length; t++) {
             Track track = tracks[t];
             serialized.append("TRACK|number=").append(t).append("|events=").append(track.size()).append("\n");
-            
+
             // Process all events in the track
             for (int i = 0; i < track.size(); i++) {
                 MidiEvent event = track.get(i);
                 MidiMessage message = event.getMessage();
                 long tick = event.getTick();
-                
+
                 if (message instanceof ShortMessage) {
                     ShortMessage sm = (ShortMessage) message;
                     int command = sm.getCommand();
                     int channel = sm.getChannel();
                     int data1 = sm.getData1();
                     int data2 = sm.getData2();
-                    
+
                     serialized.append("EVENT|tick=").append(tick)
                              .append("|type=ShortMessage")
                              .append("|command=").append(command)
                              .append("|channel=").append(channel)
                              .append("|data1=").append(data1)
                              .append("|data2=").append(data2);
-                    
+
                     // Add human-readable descriptions for common commands
                     if (command == ShortMessage.NOTE_ON) {
                         serialized.append("|description=NOTE_ON")
@@ -84,11 +91,11 @@ public class MidiSerializer {
                     MetaMessage mm = (MetaMessage) message;
                     int type = mm.getType();
                     byte[] data = mm.getData();
-                    
+
                     serialized.append("EVENT|tick=").append(tick)
                              .append("|type=MetaMessage")
                              .append("|metaType=").append(type);
-                    
+
                     // Add human-readable descriptions for common meta events
                     if (type == 0x51) { // Tempo
                         int tempo = ((data[0] & 0xff) << 16) | ((data[1] & 0xff) << 8) | (data[2] & 0xff);
@@ -114,11 +121,14 @@ public class MidiSerializer {
                              .append("|type=SysexMessage")
                              .append("|description=SYSTEM_EXCLUSIVE");
                 }
-                
+
                 serialized.append("\n");
             }
         }
-        
+
+        // Add end delimiter
+        serialized.append(MIDI_END_DELIMITER).append("\n");
+
         return serialized.toString();
     }
 }

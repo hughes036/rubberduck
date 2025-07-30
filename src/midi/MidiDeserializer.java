@@ -11,7 +11,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MidiDeserializer {
-    
+
+    // Delimiters for the serialized MIDI format (same as in MidiSerializer)
+    public static final String MIDI_START_DELIMITER = "<<MIDI_START>>";
+    public static final String MIDI_END_DELIMITER = "<<MIDI_END>>";
+
     /**
      * Converts a serialized text representation of MIDI data to a MIDI file.
      * 
@@ -26,7 +30,7 @@ public class MidiDeserializer {
         int fileType = 1; // Multiple track file format
         MidiSystem.write(sequence, fileType, outputFile);
     }
-    
+
     /**
      * Converts a serialized text representation of MIDI data to a MIDI Sequence object.
      * 
@@ -35,60 +39,69 @@ public class MidiDeserializer {
      * @throws InvalidMidiDataException If the serialized data cannot be converted to valid MIDI
      */
     public static Sequence deserializeToSequence(String serializedMidi) throws InvalidMidiDataException {
+        // Remove delimiters if present
+        if (serializedMidi.contains(MIDI_START_DELIMITER)) {
+            int startIndex = serializedMidi.indexOf(MIDI_START_DELIMITER) + MIDI_START_DELIMITER.length();
+            int endIndex = serializedMidi.indexOf(MIDI_END_DELIMITER);
+            if (endIndex > startIndex) {
+                serializedMidi = serializedMidi.substring(startIndex, endIndex).trim();
+            }
+        }
+
         String[] lines = serializedMidi.split("\n");
-        
+
         // Parse header information
         if (lines.length < 2 || !lines[0].startsWith("MIDI_HEADER")) {
             throw new InvalidMidiDataException("Invalid serialized MIDI format: missing header");
         }
-        
+
         Map<String, String> headerInfo = parseKeyValuePairs(lines[0]);
         float divisionType = Float.parseFloat(headerInfo.get("divisionType"));
         int resolution = Integer.parseInt(headerInfo.get("resolution"));
-        
+
         Sequence sequence = new Sequence(divisionType, resolution);
-        
+
         // Parse tracks information
         if (!lines[1].startsWith("TRACKS")) {
             throw new InvalidMidiDataException("Invalid serialized MIDI format: missing tracks information");
         }
-        
+
         int currentLine = 2;
         while (currentLine < lines.length) {
             if (!lines[currentLine].startsWith("TRACK")) {
                 break;
             }
-            
+
             // Create a new track
             Track track = sequence.createTrack();
             currentLine++;
-            
+
             // Process events for this track
             while (currentLine < lines.length && lines[currentLine].startsWith("EVENT")) {
                 Map<String, String> eventInfo = parseKeyValuePairs(lines[currentLine]);
-                
+
                 long tick = Long.parseLong(eventInfo.get("tick"));
                 String type = eventInfo.get("type");
-                
+
                 MidiMessage message = null;
-                
+
                 if ("ShortMessage".equals(type)) {
                     int command = Integer.parseInt(eventInfo.get("command"));
                     int channel = Integer.parseInt(eventInfo.get("channel"));
                     int data1 = Integer.parseInt(eventInfo.get("data1"));
                     int data2 = Integer.parseInt(eventInfo.get("data2"));
-                    
+
                     ShortMessage sm = new ShortMessage();
                     sm.setMessage(command, channel, data1, data2);
                     message = sm;
                 } else if ("MetaMessage".equals(type)) {
                     int metaType = Integer.parseInt(eventInfo.get("metaType"));
                     byte[] data = null;
-                    
+
                     // Handle specific meta message types
                     if (eventInfo.containsKey("description")) {
                         String description = eventInfo.get("description");
-                        
+
                         if ("TEMPO".equals(description) && eventInfo.containsKey("bpm")) {
                             float bpm = Float.parseFloat(eventInfo.get("bpm"));
                             int tempo = Math.round(60000000f / bpm);
@@ -119,11 +132,11 @@ public class MidiDeserializer {
                             data = name.getBytes();
                         }
                     }
-                    
+
                     if (data == null) {
                         data = new byte[0]; // Default to empty data if not handled specifically
                     }
-                    
+
                     MetaMessage mm = new MetaMessage();
                     mm.setMessage(metaType, data, data.length);
                     message = mm;
@@ -135,19 +148,19 @@ public class MidiDeserializer {
                     sm.setMessage(SysexMessage.SYSTEM_EXCLUSIVE, data, data.length);
                     message = sm;
                 }
-                
+
                 if (message != null) {
                     MidiEvent event = new MidiEvent(message, tick);
                     track.add(event);
                 }
-                
+
                 currentLine++;
             }
         }
-        
+
         return sequence;
     }
-    
+
     /**
      * Parses a string of key-value pairs separated by pipes (|) into a map.
      * 
@@ -157,7 +170,7 @@ public class MidiDeserializer {
     private static Map<String, String> parseKeyValuePairs(String line) {
         Map<String, String> result = new HashMap<>();
         String[] parts = line.split("\\|");
-        
+
         for (String part : parts) {
             int equalsIndex = part.indexOf('=');
             if (equalsIndex > 0) {
@@ -166,7 +179,7 @@ public class MidiDeserializer {
                 result.put(key, value);
             }
         }
-        
+
         return result;
     }
 }
