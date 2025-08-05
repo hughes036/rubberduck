@@ -1,6 +1,10 @@
 import midi.MidiSerializer;
 import midi.MidiDeserializer;
 import midi.MidiUtils;
+import llm.LLMService;
+import llm.LLMServiceFactory;
+import llm.ApiKeyManager;
+import llm.PromptBuilder;
 
 import javax.sound.midi.*;
 import java.io.BufferedReader;
@@ -9,99 +13,215 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Map;
 
 /**
- * Main class for the MIDI processing CLI tool.
- * This class provides a command-line interface for converting between MIDI files
- * and serialized text format.
+ * Main class for the LLM-powered MIDI composition tool.
+ * This tool uses LLMs to modify MIDI files based on composition prompts.
  */
 public class Main {
+    /**
+     * Entry point for the LLM-powered MIDI composition tool.
+     *
+     * This method processes command-line arguments to modify a MIDI file based on a user-provided composition prompt using a specified large language model (LLM) service. It validates inputs, retrieves the API key, serializes the input MIDI file, interacts with the LLM to generate a modified composition, deserializes the result, and writes the output MIDI file. Progress and results are printed to the console.
+     *
+     * Expects at least four arguments: input MIDI file path, output MIDI file path, LLM service name, API key (or empty string to load from file), followed by the composition prompt.
+     */
     public static void main(String[] args) {
         try {
             // Check if arguments are provided
-            if (args.length < 1) {
+            if (args.length < 4) {
                 printUsage();
                 return;
             }
 
-            // Get the input file path from arguments
-            String inputFilePath = args[0];
-            File inputFile = new File(inputFilePath);
+            // Parse command line arguments
+            String inputMidiPath = args[0];
+            String outputMidiPath = args[1];
+            String llmService = args[2];
+            String apiKeyArg = args[3];
+            
+            // Composition prompt is all remaining arguments joined together
+            StringBuilder compositionPrompt = new StringBuilder();
+            for (int i = 4; i < args.length; i++) {
+                if (i > 4) compositionPrompt.append(" ");
+                compositionPrompt.append(args[i]);
+            }
+            
+            if (compositionPrompt.toString().trim().isEmpty()) {
+                System.err.println("Error: Composition prompt is required");
+                printUsage();
+                return;
+            }
 
-            // Check if the file exists
+            // Validate input file
+            File inputFile = new File(inputMidiPath);
             if (!inputFile.exists()) {
-                System.err.println("Error: File does not exist: " + inputFilePath);
-                printUsage();
+                System.err.println("Error: Input MIDI file does not exist: " + inputMidiPath);
                 return;
             }
 
-            // Determine if the input is a MIDI file or a serialized text file
-            boolean isMidiFile = isMidiFile(inputFile);
+            if (!isMidiFile(inputFile)) {
+                System.err.println("Error: Input file is not a valid MIDI file: " + inputMidiPath);
+                return;
+            }
 
-            if (isMidiFile) {
-                // Convert MIDI file to serialized text
-                String outputFilePath = getOutputFilePath(inputFilePath, ".txt");
-                String serialized = MidiSerializer.serializeMidiFile(inputFile);
+            // Get API key
+            String apiKey = getApiKey(llmService, apiKeyArg);
+            if (apiKey == null || apiKey.trim().isEmpty()) {
+                System.err.println("Error: No API key found for service: " + llmService);
+                System.err.println("Either provide API key as argument or add it to apikey.txt");
+                return;
+            }
 
-                // Write the serialized data to a file
-                Files.write(Paths.get(outputFilePath), serialized.getBytes());
+            System.out.println("🎵 LLM-Powered MIDI Composer");
+            System.out.println("============================");
+            System.out.println("Input MIDI: " + inputMidiPath);
+            System.out.println("Output MIDI: " + outputMidiPath);
+            System.out.println("LLM Service: " + llmService);
+            System.out.println("Composition Request: " + compositionPrompt.toString());
+            System.out.println();
 
-                System.out.println("Successfully converted MIDI file to serialized format.");
-                System.out.println("Output file: " + outputFilePath);
+            // Step 1: Serialize the input MIDI file
+            System.out.println("Step 1: Converting MIDI to serialized format...");
+            String serializedMidi = MidiSerializer.serializeMidiFile(inputFile);
+            System.out.println("✓ MIDI file serialized successfully");
 
-                // Print a sample of the serialized data
-                System.out.println("\nSerialized data sample (first 200 chars):");
-                System.out.println(serialized.substring(0, Math.min(serialized.length(), 200)) + "...");
+            // Step 2: Create LLM service and build prompt
+            System.out.println("\nStep 2: Preparing LLM request...");
+            LLMService llm = LLMServiceFactory.createService(llmService, apiKey);
+            String prompt = PromptBuilder.buildCompositionPrompt(serializedMidi, compositionPrompt.toString());
+            System.out.println("✓ LLM service initialized: " + llm.getServiceName());
+
+            // Step 3: Send request to LLM
+            System.out.println("\nStep 3: Sending composition request to " + llmService + "...");
+            String llmResponse = llm.processCompositionRequest(prompt);
+            System.out.println("✓ LLM response received");
+
+            // Step 4: Extract modified MIDI from response
+            System.out.println("\nStep 4: Extracting modified MIDI data...");
+            String modifiedSerializedMidi = PromptBuilder.extractSerializedMidi(llmResponse);
+            System.out.println("✓ Modified MIDI data extracted");
+
+            // Step 5: Deserialize back to MIDI file
+            System.out.println("\nStep 5: Creating output MIDI file...");
+            File outputFile = new File(outputMidiPath);
+            MidiDeserializer.deserializeToMidiFile(modifiedSerializedMidi, outputFile);
+            System.out.println("✓ Output MIDI file created: " + outputMidiPath);
+
+            // Print information about the created MIDI file
+            String midiInfo = MidiUtils.getMidiFileInfo(outputFile);
+            System.out.println("\n🎶 Composition Complete!");
+            System.out.println("======================");
+            System.out.println(midiInfo);
+
+            // Optionally print a preview of what the LLM said
+            System.out.println("\n💭 LLM Explanation:");
+            System.out.println("==================");
+            String explanation = extractExplanation(llmResponse);
+            if (!explanation.trim().isEmpty()) {
+                System.out.println(explanation);
             } else {
-                // Convert serialized text to MIDI file
-                String outputFilePath = getOutputFilePath(inputFilePath, ".mid");
-                File outputFile = new File(outputFilePath);
-
-                // Read the serialized data from the file
-                String serialized = new String(Files.readAllBytes(Paths.get(inputFilePath)));
-
-                // Deserialize to MIDI file
-                MidiDeserializer.deserializeToMidiFile(serialized, outputFile);
-
-                System.out.println("Successfully converted serialized format to MIDI file.");
-                System.out.println("Output file: " + outputFilePath);
-
-                // Print information about the created MIDI file
-                String midiInfo = MidiUtils.getMidiFileInfo(outputFile);
-                System.out.println("\nMIDI file information:");
-                System.out.println(midiInfo);
+                System.out.println("(No additional explanation provided)");
             }
 
         } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("❌ Error: " + e.getMessage());
             e.printStackTrace();
+            System.err.println();
             printUsage();
         }
     }
 
     /**
-     * Prints the usage information for the CLI tool.
+     * Retrieves the API key for the specified LLM service.
+     *
+     * If a non-empty API key argument is provided, it is returned directly; otherwise, the key is loaded from persistent storage.
+     *
+     * @param serviceName the name of the LLM service for which the API key is required
+     * @param apiKeyArg the API key provided as a command-line argument, or an empty string to trigger file-based retrieval
+     * @return the API key string for the specified service
+     * @throws IOException if loading the API key from storage fails
      */
-    private static void printUsage() {
-        System.out.println("MIDI Processing CLI Tool");
-        System.out.println("======================");
-        System.out.println("Usage: java -jar midi-processor.jar <input-file>");
-        System.out.println("  <input-file>: Path to a MIDI file (.mid) or a serialized text file");
-        System.out.println();
-        System.out.println("The tool automatically detects the file type and performs the appropriate conversion:");
-        System.out.println("  - If the input is a MIDI file, it will be converted to a serialized text format");
-        System.out.println("  - If the input is a serialized text file, it will be converted to a MIDI file");
-        System.out.println();
-        System.out.println("Examples:");
-        System.out.println("  java -jar midi-processor.jar input.mid");
-        System.out.println("  java -jar midi-processor.jar serialized.txt");
+    private static String getApiKey(String serviceName, String apiKeyArg) throws IOException {
+        // If API key is provided as argument and not empty, use it
+        if (apiKeyArg != null && !apiKeyArg.trim().isEmpty()) {
+            return apiKeyArg;
+        }
+
+        // Otherwise, try to load from apikey.txt
+        return ApiKeyManager.getApiKey(serviceName);
     }
 
     /**
-     * Determines if a file is a MIDI file based on its content.
-     * 
-     * @param file The file to check
-     * @return true if the file is a MIDI file, false otherwise
+     * Extracts and returns any explanation text from an LLM response, omitting all lines that are part of the serialized MIDI data.
+     *
+     * The method scans the response line by line, skipping lines that begin with MIDI data markers. Once the MIDI data ends, all subsequent lines are collected as explanation.
+     *
+     * @param llmResponse the full response string from the LLM, containing serialized MIDI data and optional explanation
+     * @return the extracted explanation text, or an empty string if none is found
+     */
+    private static String extractExplanation(String llmResponse) {
+        String[] lines = llmResponse.split("\n");
+        StringBuilder explanation = new StringBuilder();
+        boolean pastMidiData = false;
+
+        for (String line : lines) {
+            line = line.trim();
+            
+            if (pastMidiData) {
+                explanation.append(line).append("\n");
+            } else if (!line.isEmpty() && 
+                       !line.startsWith("MIDI_HEADER|") && 
+                       !line.startsWith("TRACKS|") && 
+                       !line.startsWith("TRACK|") && 
+                       !line.startsWith("EVENT|")) {
+                pastMidiData = true;
+                explanation.append(line).append("\n");
+            }
+        }
+
+        return explanation.toString().trim();
+    }
+
+    /**
+     * Prints detailed usage instructions for the LLM-powered MIDI composition CLI tool, including argument descriptions, example commands, and API key file formats.
+     */
+    private static void printUsage() {
+        System.out.println("🎵 LLM-Powered MIDI Composer");
+        System.out.println("============================");
+        System.out.println("Usage: java -jar rubberduck.jar <input-midi> <output-midi> <llm-service> <api-key> <composition-prompt>");
+        System.out.println();
+        System.out.println("Arguments:");
+        System.out.println("  <input-midi>         Path to input MIDI file");
+        System.out.println("  <output-midi>        Path for output MIDI file");
+        System.out.println("  <llm-service>        LLM service to use: " + String.join(", ", LLMServiceFactory.getSupportedServices()));
+        System.out.println("  <api-key>            API key (use \"\" to load from apikey.txt)");
+        System.out.println("  <composition-prompt> What you want the LLM to do to the music");
+        System.out.println();
+        System.out.println("Examples:");
+        System.out.println("  # Add a bassline using Gemini with API key from file");
+        System.out.println("  java -jar rubberduck.jar input.mid output.mid gemini \"\" \"Add a walking bassline\"");
+        System.out.println();
+        System.out.println("  # Add drums using Gemini with inline API key");
+        System.out.println("  java -jar rubberduck.jar song.mid enhanced.mid gemini \"your-api-key\" \"Add a simple drum pattern\"");
+        System.out.println();
+        System.out.println("API Key File Format (apikey.txt):");
+        System.out.println("  # Single key (for backward compatibility):");
+        System.out.println("  your-gemini-api-key-here");
+        System.out.println();
+        System.out.println("  # Or service-specific keys:");
+        System.out.println("  gemini=your-gemini-key");
+        System.out.println("  gpt4=your-openai-key");
+        System.out.println("  claude=your-anthropic-key");
+    }
+
+    /**
+     * Checks whether the specified file is a valid MIDI file by extension or by attempting to parse it.
+     *
+     * @param file the file to check
+     * @return true if the file has a MIDI extension or can be parsed as a MIDI file; false otherwise
+     * @throws IOException if an I/O error occurs while accessing the file
      */
     private static boolean isMidiFile(File file) throws IOException {
         // Check file extension first
@@ -110,42 +230,12 @@ public class Main {
             return true;
         }
 
-        // If extension doesn't help, try to read the first few bytes
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String firstLine = reader.readLine();
-            if (firstLine != null) {
-                // Check if the file starts with the MIDI header marker
-                if (firstLine.startsWith("MIDI_HEADER")) {
-                    return false; // It's a serialized text file
-                }
-
-                // Try to parse as a MIDI file
-                try {
-                    MidiSystem.getSequence(file);
-                    return true; // Successfully parsed as MIDI
-                } catch (InvalidMidiDataException e) {
-                    return false; // Not a valid MIDI file
-                }
-            }
+        // Try to parse as a MIDI file
+        try {
+            MidiSystem.getSequence(file);
+            return true; // Successfully parsed as MIDI
+        } catch (InvalidMidiDataException e) {
+            return false; // Not a valid MIDI file
         }
-
-        // Default to false if we can't determine
-        return false;
-    }
-
-    /**
-     * Generates an output file path based on the input file path and a new extension.
-     * 
-     * @param inputFilePath The input file path
-     * @param newExtension The new file extension (including the dot)
-     * @return The output file path
-     */
-    private static String getOutputFilePath(String inputFilePath, String newExtension) {
-        // Remove the extension from the input file path
-        int lastDotIndex = inputFilePath.lastIndexOf('.');
-        String basePath = (lastDotIndex > 0) ? inputFilePath.substring(0, lastDotIndex) : inputFilePath;
-
-        // Add the new extension
-        return basePath + newExtension;
     }
 }
