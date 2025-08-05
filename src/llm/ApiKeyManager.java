@@ -15,13 +15,12 @@ public class ApiKeyManager {
     private static final String API_KEY_FILE = "apikey.txt";
     
     /**
-     * Load API keys from apikey.txt file.
-     * The file can contain either:
-     * 1. A single API key (for backward compatibility)
-     * 2. Service->key pairs in format "service=key" (one per line)
-     * 
-     * @return Map of service names to API keys
-     * @throws IOException if the file cannot be read
+     * Loads API keys from the `apikey.txt` file, supporting both single-key and service-to-key mapping formats.
+     *
+     * The file may contain either a single API key (assigned to the default service "gemini") or multiple lines in the format `service=key`, one per line. Lines that are empty or start with `#` are ignored.
+     *
+     * @return a map of service names (in lowercase) to their corresponding API keys
+     * @throws IOException if the `apikey.txt` file does not exist or cannot be read
      */
     public static Map<String, String> loadApiKeys() throws IOException {
         Map<String, String> apiKeys = new HashMap<>();
@@ -61,11 +60,11 @@ public class ApiKeyManager {
     }
     
     /**
-     * Get API key for a specific service.
-     * 
-     * @param serviceName The name of the LLM service
-     * @return The API key for the service, or null if not found
-     * @throws IOException if the API key file cannot be read
+     * Retrieves the API key for the specified service from the `apikey.txt` file.
+     *
+     * @param serviceName the name of the service whose API key is requested
+     * @return the API key for the service, or {@code null} if not found
+     * @throws IOException if the API key file does not exist or cannot be read
      */
     public static String getApiKey(String serviceName) throws IOException {
         Map<String, String> apiKeys = loadApiKeys();
