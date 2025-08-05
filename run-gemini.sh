@@ -11,7 +11,6 @@ if [ ! -f "./apikey.txt" ]; then
 fi
 
 # Export the API key from file
-export GEMINI_API_KEY=$(cat ./apikey.txt)
 export GOOGLE_API_KEY=$(cat ./apikey.txt)
 
 echo "Running Gemini Hello World example..."

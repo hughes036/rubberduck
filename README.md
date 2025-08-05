@@ -47,7 +47,7 @@ This project provides two main functionalities:
    ./gradlew run
    
    # For Gemini AI (requires API key)
-   export GEMINI_API_KEY=$(cat ./apikey.txt)
+   export GOOGLE_API_KEY=$(cat ./apikey.txt)
    ./gradlew runGemini
    ```
 
