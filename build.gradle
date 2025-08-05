@@ -4,7 +4,7 @@ plugins {
 }
 
 application {
-    mainClass = 'gemini.GeminiHelloWorld'
+    mainClass = 'Main'
 }
 
 group = 'com.rubberduck'
@@ -24,6 +24,15 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+// Custom task to run Gemini Hello World example
+task runGemini(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'gemini.GeminiHelloWorld'
+    
+    // Pass through environment variables
+    environment System.getenv()
 }
 
 sourceSets {

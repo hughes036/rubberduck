@@ -12,29 +12,43 @@ A Java project that combines MIDI processing with Gemini AI integration. This li
 
 ## Getting Started
 
+This project provides two main functionalities:
+
+1. **MIDI Processing CLI** - Convert MIDI files to text and vice versa (original functionality)
+2. **Gemini AI Integration** - Example of using Google's Gemini AI API (new addition)
+
 ### Prerequisites
 
 - Java 21 (configured via SDKMAN)
 - Gradle
-- Gemini API key
+- Gemini API key (only needed for AI features)
 
 ### Setup
 
-1. Create an `apikey.txt` file with your Gemini API key:
-   ```bash
-   echo "your-gemini-api-key-here" > apikey.txt
-   ```
-
-2. Build and run the project:
+1. For MIDI processing functionality:
    ```bash
    ./run.sh
    ```
 
-   Or manually:
+2. For Gemini AI integration, first create an `apikey.txt` file with your Gemini API key:
    ```bash
+   echo "your-gemini-api-key-here" > apikey.txt
+   ```
+
+   Then run the Gemini example:
+   ```bash
+   ./run-gemini.sh
+   ```
+
+3. Or manually:
+   ```bash
+   # For MIDI processing
    ./gradlew clean build
-   export GEMINI_API_KEY=$(cat ./apikey.txt)
    ./gradlew run
+   
+   # For Gemini AI (requires API key)
+   export GEMINI_API_KEY=$(cat ./apikey.txt)
+   ./gradlew runGemini
    ```
 
 ## Examples
