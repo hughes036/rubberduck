@@ -2,6 +2,7 @@ package llm;
 
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
+import java.util.Collections;
 
 /**
  * Gemini LLM service implementation.
@@ -48,10 +49,27 @@ public class GeminiService implements LLMService {
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
         
-        // Set the environment variable that the Gemini client expects
-        System.setProperty("GOOGLE_API_KEY", apiKey);
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("API key cannot be null or empty");
+        }
         
-        // Initialize the client
-        this.client = new Client();
+        // The Google GenAI library expects the API key in environment variable GOOGLE_API_KEY
+        // Our Gradle build.gradle file should set this environment variable when running
+        // If not set, provide helpful error message
+        String envApiKey = System.getenv("GOOGLE_API_KEY");
+        if (envApiKey == null || envApiKey.trim().isEmpty()) {
+            throw new RuntimeException(
+                "GOOGLE_API_KEY environment variable not set. " +
+                "This should be automatically set by the Gradle build when running with apikeys.json. " +
+                "If running outside Gradle, set manually: export GOOGLE_API_KEY=\"your-key\""
+            );
+        }
+        
+        try {
+            // Initialize the client (it will read from GOOGLE_API_KEY environment variable)
+            this.client = new Client();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize Gemini client: " + e.getMessage(), e);
+        }
     }
 }

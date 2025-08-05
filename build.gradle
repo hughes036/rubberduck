@@ -35,6 +35,47 @@ task runGemini(type: JavaExec) {
     environment System.getenv()
 }
 
+// Main application task
+application {
+    mainClass = 'Main'
+}
+
+// Configure the run task to set environment variables from apikeys.json
+run {
+    // Pass through all existing environment variables
+    environment System.getenv()
+    
+    // Try to load API key from apikeys.json and set environment variable
+    doFirst {
+        def apikeysFile = new File(projectDir, 'apikeys.json')
+        if (apikeysFile.exists()) {
+            try {
+                def json = new groovy.json.JsonSlurper().parseText(apikeysFile.text)
+                if (json.gemini && !json.gemini.toString().trim().isEmpty()) {
+                    environment 'GOOGLE_API_KEY', json.gemini
+                    println "✓ Loaded Gemini API key from apikeys.json"
+                }
+            } catch (Exception e) {
+                println "Warning: Could not parse apikeys.json: ${e.message}"
+            }
+        }
+        
+        // Also check for legacy apikey.txt
+        def legacyApiKeyFile = new File(projectDir, 'apikey.txt')
+        if (legacyApiKeyFile.exists() && !environment.containsKey('GOOGLE_API_KEY')) {
+            try {
+                def apiKey = legacyApiKeyFile.text.trim()
+                if (!apiKey.isEmpty()) {
+                    environment 'GOOGLE_API_KEY', apiKey
+                    println "✓ Loaded API key from legacy apikey.txt"
+                }
+            } catch (Exception e) {
+                println "Warning: Could not read apikey.txt: ${e.message}"
+            }
+        }
+    }
+}
+
 sourceSets {
     main {
         java {
