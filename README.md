@@ -1,13 +1,64 @@
-# MIDI Processing Library
+# Rubberduck Project
 
-A Java library for processing MIDI files, designed to work with Large Language Models (LLMs). This library provides functionality to convert MIDI files to a serialized text format that can be understood by LLMs, and to convert the serialized format back to MIDI files.
+A Java project that combines MIDI processing with Gemini AI integration. This library provides functionality to convert MIDI files to a serialized text format that can be understood by LLMs, and includes a working example of Gemini AI integration.
 
 ## Features
 
 - Convert MIDI files to a serialized text format
 - Convert serialized text format back to MIDI files
 - Utility functions for working with MIDI data
+- Gemini AI integration example
 - Comprehensive test suite
+
+## Getting Started
+
+This project provides two main functionalities:
+
+1. **MIDI Processing CLI** - Convert MIDI files to text and vice versa (original functionality)
+2. **Gemini AI Integration** - Example of using Google's Gemini AI API (new addition)
+
+### Prerequisites
+
+- Java 21 (configured via SDKMAN)
+- Gradle
+- Gemini API key (only needed for AI features)
+
+### Setup
+
+1. For MIDI processing functionality:
+   ```bash
+   ./run.sh
+   ```
+
+2. For Gemini AI integration, first create an `apikey.txt` file with your Gemini API key:
+   ```bash
+   echo "your-gemini-api-key-here" > apikey.txt
+   ```
+
+   Then run the Gemini example:
+   ```bash
+   ./run-gemini.sh
+   ```
+
+3. Or manually:
+   ```bash
+   # For MIDI processing
+   ./gradlew clean build
+   ./gradlew run
+   
+   # For Gemini AI (requires API key)
+   export GOOGLE_API_KEY=$(cat ./apikey.txt)
+   ./gradlew runGemini
+   ```
+
+## Examples
+
+### Gemini AI Integration
+
+The project includes a working example (`src/gemini/GeminiHelloWorld.java`) that demonstrates how to:
+- Set up the Gemini client
+- Send prompts to the Gemini API
+- Process responses
 
 ## API Documentation
 
