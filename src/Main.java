@@ -131,7 +131,7 @@ public class Main {
      */
     private static String getApiKey(String serviceName, String apiKeyArg) throws IOException {
         // If API key is provided as argument and not empty, use it
-        if (apiKeyArg != null && !apiKeyArg.trim().isEmpty() && !apiKeyArg.equals("")) {
+        if (apiKeyArg != null && !apiKeyArg.trim().isEmpty()) {
             return apiKeyArg;
         }
 
