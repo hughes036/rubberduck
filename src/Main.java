@@ -48,7 +48,7 @@ public class Main {
                 compositionPrompt.append(args[i]);
             }
             
-            if (compositionPrompt.length() == 0) {
+            if (compositionPrompt.toString().trim().isEmpty()) {
                 System.err.println("Error: Composition prompt is required");
                 printUsage();
                 return;
