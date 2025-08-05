@@ -4,7 +4,7 @@ plugins {
 }
 
 application {
-    mainClass = 'Main'
+    mainClass = 'gemini.GeminiHelloWorld'
 }
 
 group = 'com.rubberduck'
@@ -17,6 +17,9 @@ repositories {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    
+    // Google GenAI for Gemini integration
+    implementation 'com.google.genai:google-genai:1.0.0'
 }
 
 test {
