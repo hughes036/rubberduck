@@ -23,19 +23,27 @@ This project provides AI-powered MIDI composition capabilities alongside traditi
 
 ### Setup
 
-1. Create an `apikey.txt` file with your API key:
+1. Create an `apikeys.json` file with your API keys:
+   ```json
+   {
+     "gemini": "your-gemini-api-key-here",
+     "gpt4": "your-openai-api-key-here", 
+     "claude": "your-anthropic-api-key-here"
+   }
+   ```
+
+   Or copy the example file:
    ```bash
-   # Single API key (for Gemini)
-   echo "your-gemini-api-key-here" > apikey.txt
-   
-   # Or service-specific format
-   echo "gemini=your-gemini-key" > apikey.txt
+   cp apikeys.json.example apikeys.json
+   # Then edit apikeys.json with your actual API keys
    ```
 
 2. Build the project:
    ```bash
    ./gradlew build
    ```
+
+**Note:** The legacy `apikey.txt` format is still supported for backward compatibility.
 
 ## Usage
 
@@ -76,6 +84,38 @@ For backward compatibility, you can still use the Gemini hello world example:
 
 ```bash
 ./run-gemini.sh
+```
+
+## 🔑 API Key Management
+
+The tool supports flexible API key management for multiple LLM services:
+
+### JSON Format (Recommended)
+Create an `apikeys.json` file:
+```json
+{
+  "gemini": "your-gemini-api-key-here",
+  "gpt4": "your-openai-api-key-here",
+  "claude": "your-anthropic-api-key-here"
+}
+```
+
+### Features:
+- ✅ **Multi-service support** - Configure keys for different LLM providers
+- ✅ **Validation** - Tool validates service availability and configuration
+- ✅ **Backward compatibility** - Legacy `apikey.txt` format still supported
+- ✅ **Inline keys** - Can provide API keys directly as command arguments
+- ✅ **Smart detection** - Only services with valid keys are shown as available
+
+### Legacy Format (Backward Compatible)
+The old `apikey.txt` format is still supported:
+```bash
+# Single key (assumes Gemini)
+your-gemini-api-key-here
+
+# Or service-specific format
+gemini=your-gemini-key
+gpt4=your-openai-key
 ```
 
 ## API Documentation

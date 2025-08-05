@@ -1,7 +1,9 @@
 package llm;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Factory for creating LLM service instances.
@@ -44,11 +46,44 @@ public class LLMServiceFactory {
     }
     
     /**
-     * Get a list of supported LLM service names.
+     * Get a list of all supported LLM service names (regardless of configuration).
      * 
      * @return Array of supported service names
      */
     public static String[] getSupportedServices() {
         return serviceMap.keySet().toArray(new String[0]);
+    }
+    
+    /**
+     * Get a list of configured LLM services (those with API keys).
+     * 
+     * @return Array of configured service names, or all supported services if config can't be read
+     */
+    public static String[] getConfiguredServices() {
+        try {
+            Set<String> configured = ApiKeyManager.getAvailableServices();
+            return configured.toArray(new String[0]);
+        } catch (IOException e) {
+            // If we can't read the config, return all supported services
+            return getSupportedServices();
+        }
+    }
+    
+    /**
+     * Check if a service is both supported and configured.
+     * 
+     * @param serviceName The name of the service
+     * @return true if the service is supported and has an API key configured
+     */
+    public static boolean isServiceAvailable(String serviceName) {
+        if (!serviceMap.containsKey(serviceName.toLowerCase())) {
+            return false;
+        }
+        
+        try {
+            return ApiKeyManager.isServiceConfigured(serviceName);
+        } catch (IOException e) {
+            return false;
+        }
     }
 }

@@ -62,9 +62,28 @@ public class Main {
             // Get API key
             String apiKey = getApiKey(llmService, apiKeyArg);
             if (apiKey == null || apiKey.trim().isEmpty()) {
-                System.err.println("Error: No API key found for service: " + llmService);
-                System.err.println("Either provide API key as argument or add it to apikey.txt");
+                System.err.println("❌ Error: No API key found for service: " + llmService);
+                System.err.println();
+                printApiKeyHelp();
                 return;
+            }
+
+            // Validate that the service is supported
+            try {
+                if (!ApiKeyManager.isServiceConfigured(llmService)) {
+                    System.err.println("❌ Error: Service '" + llmService + "' is not properly configured");
+                    System.err.println("Available configured services: " + ApiKeyManager.getAvailableServices());
+                    System.err.println();
+                    printApiKeyHelp();
+                    return;
+                }
+            } catch (IOException e) {
+                // If we can't read the config file, but we have an API key from args, continue
+                if (apiKeyArg == null || apiKeyArg.trim().isEmpty()) {
+                    System.err.println("❌ Error: Cannot read API key configuration: " + e.getMessage());
+                    printApiKeyHelp();
+                    return;
+                }
             }
 
             System.out.println("🎵 LLM-Powered MIDI Composer");
@@ -177,7 +196,7 @@ public class Main {
         System.out.println("  <input-midi>         Path to input MIDI file");
         System.out.println("  <output-midi>        Path for output MIDI file");
         System.out.println("  <llm-service>        LLM service to use: " + String.join(", ", LLMServiceFactory.getSupportedServices()));
-        System.out.println("  <api-key>            API key (use \"\" to load from apikey.txt)");
+        System.out.println("  <api-key>            API key (use \"\" to load from apikeys.json)");
         System.out.println("  <composition-prompt> What you want the LLM to do to the music");
         System.out.println();
         System.out.println("Examples:");
@@ -187,14 +206,33 @@ public class Main {
         System.out.println("  # Add drums using Gemini with inline API key");
         System.out.println("  java -jar rubberduck.jar song.mid enhanced.mid gemini \"your-api-key\" \"Add a simple drum pattern\"");
         System.out.println();
-        System.out.println("API Key File Format (apikey.txt):");
-        System.out.println("  # Single key (for backward compatibility):");
-        System.out.println("  your-gemini-api-key-here");
+        printApiKeyHelp();
+    }
+
+    /**
+     * Prints help information about API key configuration.
+     */
+    private static void printApiKeyHelp() {
+        System.out.println("📁 API Key Configuration:");
+        System.out.println("========================");
+        System.out.println("Create an 'apikeys.json' file in the project directory with the following format:");
         System.out.println();
-        System.out.println("  # Or service-specific keys:");
-        System.out.println("  gemini=your-gemini-key");
-        System.out.println("  gpt4=your-openai-key");
-        System.out.println("  claude=your-anthropic-key");
+        System.out.println("{");
+        System.out.println("  \"gemini\": \"your-gemini-api-key-here\",");
+        System.out.println("  \"gpt4\": \"your-openai-api-key-here\",");
+        System.out.println("  \"claude\": \"your-anthropic-api-key-here\"");
+        System.out.println("}");
+        System.out.println();
+        System.out.println("📝 Notes:");
+        System.out.println("- Only services with non-empty API keys will be available");
+        System.out.println("- Legacy 'apikey.txt' format is still supported for backward compatibility");
+        System.out.println("- You can also provide API keys directly as command line arguments");
+        
+        try {
+            System.out.println("- Currently configured services: " + ApiKeyManager.getAvailableServices());
+        } catch (IOException e) {
+            System.out.println("- No API key configuration found");
+        }
     }
 
     /**
