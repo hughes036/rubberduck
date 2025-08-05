@@ -35,23 +35,21 @@ public static String buildCompositionPrompt(String serializedMidi, String compos
         throw new IllegalArgumentException("Parameters cannot be null");
     }
     StringBuilder prompt = new StringBuilder();
-    // ...
+        
+    prompt.append(SERIALIZATION_EXPLANATION);
+    
+    prompt.append("ORIGINAL MIDI DATA:\n");
+    prompt.append(serializedMidi);
+    prompt.append("\n\n");
+    
+    prompt.append("COMPOSITION REQUEST:\n");
+    prompt.append(compositionPrompt);
+    prompt.append("\n\n");
+    
+    prompt.append("Please modify the MIDI data according to the composition request and provide the complete modified serialized MIDI data in your response.");
+    
+    return prompt.toString();
 }
-        
-        prompt.append(SERIALIZATION_EXPLANATION);
-        
-        prompt.append("ORIGINAL MIDI DATA:\n");
-        prompt.append(serializedMidi);
-        prompt.append("\n\n");
-        
-        prompt.append("COMPOSITION REQUEST:\n");
-        prompt.append(compositionPrompt);
-        prompt.append("\n\n");
-        
-        prompt.append("Please modify the MIDI data according to the composition request and provide the complete modified serialized MIDI data in your response.");
-        
-        return prompt.toString();
-    }
     
     /**
      * Extracts serialized MIDI data from an LLM response string.
