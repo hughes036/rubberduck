@@ -22,11 +22,13 @@ public class PromptBuilder {
         "6. You may add explanatory text AFTER the serialized data\n\n";
     
     /**
-     * Build a complete prompt for LLM MIDI composition.
-     * 
-     * @param serializedMidi The original MIDI file in serialized format
-     * @param compositionPrompt The user's composition request
-     * @return Complete prompt ready to send to LLM
+     * Constructs a prompt for an LLM to modify MIDI data based on a user composition request.
+     *
+     * Combines a detailed explanation of the MIDI serialization format, the original serialized MIDI data, and the user's composition request into a single prompt string. The resulting prompt instructs the LLM to modify the MIDI data according to the request and return the complete modified serialized MIDI data.
+     *
+     * @param serializedMidi The original MIDI data in serialized format.
+     * @param compositionPrompt The user's composition request or instruction.
+     * @return A complete prompt string ready to be sent to the LLM.
      */
     public static String buildCompositionPrompt(String serializedMidi, String compositionPrompt) {
         StringBuilder prompt = new StringBuilder();
@@ -47,12 +49,13 @@ public class PromptBuilder {
     }
     
     /**
-     * Extract serialized MIDI data from LLM response.
-     * Looks for the serialized MIDI format in the response.
-     * 
-     * @param llmResponse The complete response from the LLM
-     * @return The extracted serialized MIDI data
-     * @throws IllegalArgumentException if no valid serialized MIDI is found
+     * Extracts serialized MIDI data from an LLM response string.
+     *
+     * Scans the response for a section beginning with "MIDI_HEADER|" and collects all subsequent lines that match the expected serialized MIDI format ("TRACKS|", "TRACK|", or "EVENT|"). Stops collecting when encountering a line that does not fit the MIDI serialization pattern. Ignores code block delimiters and empty lines.
+     *
+     * @param llmResponse The full response string returned by the LLM.
+     * @return The extracted serialized MIDI data as a string.
+     * @throws IllegalArgumentException if the response is empty or does not contain valid serialized MIDI data.
      */
     public static String extractSerializedMidi(String llmResponse) {
         if (llmResponse == null || llmResponse.trim().isEmpty()) {

@@ -6,25 +6,25 @@ package llm;
 public interface LLMService {
     
     /**
-     * Process a composition request using the LLM.
-     * 
-     * @param prompt The complete prompt including instructions and serialized MIDI
-     * @return The LLM's response containing modified serialized MIDI
-     * @throws Exception if the LLM request fails
-     */
+ * Processes a MIDI composition request using the large language model.
+ *
+ * @param prompt The full prompt containing instructions and serialized MIDI data.
+ * @return The response from the LLM with modified serialized MIDI data.
+ * @throws Exception if the LLM service fails to process the request.
+ */
     String processCompositionRequest(String prompt) throws Exception;
     
     /**
-     * Get the name of this LLM service.
-     * 
-     * @return The service name (e.g., "gemini", "gpt4", "claude")
-     */
+ * Returns the name of the LLM service.
+ *
+ * @return the service name, such as "gemini", "gpt4", or "claude"
+ */
     String getServiceName();
     
     /**
-     * Set the API key for this service.
-     * 
-     * @param apiKey The API key to use
-     */
+ * Sets the API key used to authenticate requests to the LLM service.
+ *
+ * @param apiKey the API key for the service
+ */
     void setApiKey(String apiKey);
 }

@@ -20,6 +20,13 @@ import java.util.Map;
  * This tool uses LLMs to modify MIDI files based on composition prompts.
  */
 public class Main {
+    /**
+     * Entry point for the LLM-powered MIDI composition tool.
+     *
+     * This method processes command-line arguments to modify a MIDI file based on a user-provided composition prompt using a specified large language model (LLM) service. It validates inputs, retrieves the API key, serializes the input MIDI file, interacts with the LLM to generate a modified composition, deserializes the result, and writes the output MIDI file. Progress and results are printed to the console.
+     *
+     * Expects at least four arguments: input MIDI file path, output MIDI file path, LLM service name, API key (or empty string to load from file), followed by the composition prompt.
+     */
     public static void main(String[] args) {
         try {
             // Check if arguments are provided
@@ -127,7 +134,14 @@ public class Main {
     }
 
     /**
-     * Get API key for the specified service.
+     * Retrieves the API key for the specified LLM service.
+     *
+     * If a non-empty API key argument is provided, it is returned directly; otherwise, the key is loaded from persistent storage.
+     *
+     * @param serviceName the name of the LLM service for which the API key is required
+     * @param apiKeyArg the API key provided as a command-line argument, or an empty string to trigger file-based retrieval
+     * @return the API key string for the specified service
+     * @throws IOException if loading the API key from storage fails
      */
     private static String getApiKey(String serviceName, String apiKeyArg) throws IOException {
         // If API key is provided as argument and not empty, use it
@@ -140,7 +154,12 @@ public class Main {
     }
 
     /**
-     * Extract explanation text from LLM response (everything after the serialized MIDI data).
+     * Extracts and returns any explanation text from an LLM response, omitting all lines that are part of the serialized MIDI data.
+     *
+     * The method scans the response line by line, skipping lines that begin with MIDI data markers. Once the MIDI data ends, all subsequent lines are collected as explanation.
+     *
+     * @param llmResponse the full response string from the LLM, containing serialized MIDI data and optional explanation
+     * @return the extracted explanation text, or an empty string if none is found
      */
     private static String extractExplanation(String llmResponse) {
         String[] lines = llmResponse.split("\n");
@@ -166,7 +185,7 @@ public class Main {
     }
 
     /**
-     * Prints the usage information for the CLI tool.
+     * Prints detailed usage instructions for the LLM-powered MIDI composition CLI tool, including argument descriptions, example commands, and API key file formats.
      */
     private static void printUsage() {
         System.out.println("🎵 LLM-Powered MIDI Composer");
@@ -198,7 +217,11 @@ public class Main {
     }
 
     /**
-     * Determines if a file is a MIDI file based on its content.
+     * Checks whether the specified file is a valid MIDI file by extension or by attempting to parse it.
+     *
+     * @param file the file to check
+     * @return true if the file has a MIDI extension or can be parsed as a MIDI file; false otherwise
+     * @throws IOException if an I/O error occurs while accessing the file
      */
     private static boolean isMidiFile(File file) throws IOException {
         // Check file extension first
