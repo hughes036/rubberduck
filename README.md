@@ -1,64 +1,82 @@
 # Rubberduck Project
 
-A Java project that combines MIDI processing with Gemini AI integration. This library provides functionality to convert MIDI files to a serialized text format that can be understood by LLMs, and includes a working example of Gemini AI integration.
+An LLM-powered MIDI composition tool that uses artificial intelligence to enhance and modify MIDI files based on natural language prompts. Originally a MIDI processing library, it now features integrated AI composition capabilities using services like Google's Gemini.
 
 ## Features
 
-- Convert MIDI files to a serialized text format
-- Convert serialized text format back to MIDI files
-- Utility functions for working with MIDI data
-- Gemini AI integration example
-- Comprehensive test suite
+- 🎵 **LLM-Powered MIDI Composition** - Transform MIDI files using AI with natural language prompts
+- 🎹 **MIDI Processing** - Convert MIDI files to serialized text format and back
+- 🤖 **Multiple LLM Support** - Pluggable architecture supporting various AI services
+- 🎼 **Intelligent Composition** - Add basslines, drums, harmonies, and more using AI
+- 🛠️ **Developer-Friendly** - Comprehensive API for MIDI manipulation
+- 🧪 **Well-Tested** - Comprehensive test suite ensuring reliability
 
 ## Getting Started
 
-This project provides two main functionalities:
-
-1. **MIDI Processing CLI** - Convert MIDI files to text and vice versa (original functionality)
-2. **Gemini AI Integration** - Example of using Google's Gemini AI API (new addition)
+This project provides AI-powered MIDI composition capabilities alongside traditional MIDI processing.
 
 ### Prerequisites
 
 - Java 21 (configured via SDKMAN)
 - Gradle
-- Gemini API key (only needed for AI features)
+- API key for your chosen LLM service (Gemini supported)
 
 ### Setup
 
-1. For MIDI processing functionality:
+1. Create an `apikey.txt` file with your API key:
    ```bash
-   ./run.sh
-   ```
-
-2. For Gemini AI integration, first create an `apikey.txt` file with your Gemini API key:
-   ```bash
+   # Single API key (for Gemini)
    echo "your-gemini-api-key-here" > apikey.txt
-   ```
-
-   Then run the Gemini example:
-   ```bash
-   ./run-gemini.sh
-   ```
-
-3. Or manually:
-   ```bash
-   # For MIDI processing
-   ./gradlew clean build
-   ./gradlew run
    
-   # For Gemini AI (requires API key)
-   export GOOGLE_API_KEY=$(cat ./apikey.txt)
-   ./gradlew runGemini
+   # Or service-specific format
+   echo "gemini=your-gemini-key" > apikey.txt
    ```
 
-## Examples
+2. Build the project:
+   ```bash
+   ./gradlew build
+   ```
 
-### Gemini AI Integration
+## Usage
 
-The project includes a working example (`src/gemini/GeminiHelloWorld.java`) that demonstrates how to:
-- Set up the Gemini client
-- Send prompts to the Gemini API
-- Process responses
+### 🎵 LLM-Powered Composition (Primary Feature)
+
+Transform MIDI files using AI with natural language prompts:
+
+```bash
+./gradlew run --args="input.mid output.mid gemini \"\" \"Add a walking bassline\""
+```
+
+**Arguments:**
+- `input.mid` - Input MIDI file to modify
+- `output.mid` - Output path for the enhanced MIDI file  
+- `gemini` - LLM service to use (currently: gemini)
+- `""` - API key (empty string loads from apikey.txt)
+- `"composition prompt"` - What you want the AI to do
+
+**Examples:**
+
+```bash
+# Add a bassline
+./gradlew run --args="song.mid enhanced.mid gemini \"\" \"Add a walking bassline that complements the melody\""
+
+# Add drums
+./gradlew run --args="piano.mid with_drums.mid gemini \"\" \"Add a simple drum pattern with kick on 1 and 3, snare on 2 and 4\""
+
+# Add harmony
+./gradlew run --args="melody.mid harmonized.mid gemini \"\" \"Add harmonizing chord progressions in the upper register\""
+
+# Creative modifications
+./gradlew run --args="classical.mid jazz.mid gemini \"\" \"Transform this into a jazz arrangement with swing rhythm\""
+```
+
+### 🔧 Traditional MIDI Processing
+
+For backward compatibility, you can still use the Gemini hello world example:
+
+```bash
+./run-gemini.sh
+```
 
 ## API Documentation
 
