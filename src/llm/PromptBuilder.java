@@ -30,8 +30,13 @@ public class PromptBuilder {
      * @param compositionPrompt The user's composition request or instruction.
      * @return A complete prompt string ready to be sent to the LLM.
      */
-    public static String buildCompositionPrompt(String serializedMidi, String compositionPrompt) {
-        StringBuilder prompt = new StringBuilder();
+public static String buildCompositionPrompt(String serializedMidi, String compositionPrompt) {
+    if (serializedMidi == null || compositionPrompt == null) {
+        throw new IllegalArgumentException("Parameters cannot be null");
+    }
+    StringBuilder prompt = new StringBuilder();
+    // ...
+}
         
         prompt.append(SERIALIZATION_EXPLANATION);
         
