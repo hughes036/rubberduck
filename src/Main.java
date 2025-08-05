@@ -231,7 +231,6 @@ public class Main {
         System.out.println();
         System.out.println("📝 Notes:");
         System.out.println("- Only services with non-empty API keys will be available");
-        System.out.println("- Legacy 'apikey.txt' format is still supported for backward compatibility");
         System.out.println("- You can also provide API keys directly as command line arguments");
         
         // Show currently configured services

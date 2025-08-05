@@ -1,8 +1,5 @@
 package llm;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,27 +12,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 /**
- * Utility class for managing API keys from apikeys.json file (with fallback to legacy apikey.txt).
+ * Utility class for managing API keys from apikeys.json file.
  */
 public class ApiKeyManager {
     
     private static final String API_KEYS_JSON_FILE = "apikeys.json";
-    private static final String LEGACY_API_KEY_FILE = "apikey.txt";
     
     /**
-     * Loads API keys from apikeys.json file, with fallback to legacy apikey.txt.
+     * Loads API keys from apikeys.json file.
      *
      * @return a map of service names (in lowercase) to their corresponding API keys
-     * @throws IOException if no API key files exist or cannot be read
+     * @throws IOException if apikeys.json file does not exist or cannot be read
      */
     public static Map<String, String> loadApiKeys() throws IOException {
         Path jsonFile = Paths.get(API_KEYS_JSON_FILE);
         
-        if (Files.exists(jsonFile)) {
-            return loadApiKeysFromJson(jsonFile);
-        } else {
-            return loadApiKeysFromLegacyFile();
+        if (!Files.exists(jsonFile)) {
+            throw new IOException("API key file not found: " + API_KEYS_JSON_FILE + ". Please create this file with your API keys.");
         }
+        
+        return loadApiKeysFromJson(jsonFile);
     }
     
     /**
@@ -85,47 +81,6 @@ public class ApiKeyManager {
         } catch (Exception e) {
             throw new IOException("Failed to parse " + API_KEYS_JSON_FILE + ": " + e.getMessage(), e);
         }
-    }
-    
-    /**
-     * Loads API keys from the legacy apikey.txt file format.
-     * Supports both single-key and service=key mapping formats.
-     */
-    private static Map<String, String> loadApiKeysFromLegacyFile() throws IOException {
-        Map<String, String> apiKeys = new HashMap<>();
-        File file = new File(LEGACY_API_KEY_FILE);
-        
-        if (!file.exists()) {
-            throw new IOException("No API key files found. Please create " + API_KEYS_JSON_FILE + " or " + LEGACY_API_KEY_FILE);
-        }
-        
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            boolean foundPairs = false;
-            
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (line.isEmpty() || line.startsWith("#")) {
-                    continue; // Skip empty lines and comments
-                }
-                
-                if (line.contains("=")) {
-                    // Service=key format
-                    String[] parts = line.split("=", 2);
-                    if (parts.length == 2) {
-                        apiKeys.put(parts[0].trim().toLowerCase(), parts[1].trim());
-                        foundPairs = true;
-                    }
-                } else if (!foundPairs) {
-                    // Single key format (backward compatibility)
-                    // Assume it's for Gemini since that's our default service
-                    apiKeys.put("gemini", line);
-                    break;
-                }
-            }
-        }
-        
-        return apiKeys;
     }
     
     /**
