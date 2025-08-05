@@ -54,6 +54,19 @@ public class Main {
                 return;
             }
 
+            // Validate LLM service name against available services
+            try {
+                if (!ApiKeyManager.isServiceAvailable(llmService)) {
+                    System.err.println("❌ Error: LLM service '" + llmService + "' is not available.");
+                    System.err.println("Available services: " + ApiKeyManager.getAvailableServices());
+                    System.err.println("Please check your " + (new File("apikeys.json").exists() ? "apikeys.json" : "apikey.txt") + " file.");
+                    return;
+                }
+            } catch (IOException e) {
+                System.err.println("❌ Error: Could not load API key configuration: " + e.getMessage());
+                return;
+            }
+
             // Validate input file
             File inputFile = new File(inputMidiPath);
             if (!inputFile.exists()) {
@@ -196,7 +209,7 @@ public class Main {
         System.out.println("  <input-midi>         Path to input MIDI file");
         System.out.println("  <output-midi>        Path for output MIDI file");
         System.out.println("  <llm-service>        LLM service to use: " + String.join(", ", LLMServiceFactory.getSupportedServices()));
-        System.out.println("  <api-key>            API key (use \"\" to load from apikey.txt)");
+        System.out.println("  <api-key>            API key (use \"\" to load from apikeys.json)");
         System.out.println("  <composition-prompt> What you want the LLM to do to the music");
         System.out.println();
         System.out.println("Examples:");
@@ -206,14 +219,32 @@ public class Main {
         System.out.println("  # Add drums using Gemini with inline API key");
         System.out.println("  java -jar rubberduck.jar song.mid enhanced.mid gemini \"your-api-key\" \"Add a simple drum pattern\"");
         System.out.println();
-        System.out.println("API Key File Format (apikey.txt):");
-        System.out.println("  # Single key (for backward compatibility):");
-        System.out.println("  your-gemini-api-key-here");
+        System.out.println("📁 API Key Configuration:");
+        System.out.println("========================");
+        System.out.println("Create an 'apikeys.json' file in the project directory with the following format:");
         System.out.println();
-        System.out.println("  # Or service-specific keys:");
-        System.out.println("  gemini=your-gemini-key");
-        System.out.println("  gpt4=your-openai-key");
-        System.out.println("  claude=your-anthropic-key");
+        System.out.println("{");
+        System.out.println("  \"gemini\": \"your-gemini-api-key-here\",");
+        System.out.println("  \"gpt4\": \"your-openai-api-key-here\",");
+        System.out.println("  \"claude\": \"your-anthropic-api-key-here\"");
+        System.out.println("}");
+        System.out.println();
+        System.out.println("📝 Notes:");
+        System.out.println("- Only services with non-empty API keys will be available");
+        System.out.println("- Legacy 'apikey.txt' format is still supported for backward compatibility");
+        System.out.println("- You can also provide API keys directly as command line arguments");
+        
+        // Show currently configured services
+        try {
+            var availableServices = ApiKeyManager.getAvailableServices();
+            if (!availableServices.isEmpty()) {
+                System.out.println("- Currently configured services: " + availableServices);
+            } else {
+                System.out.println("- No services currently configured (no valid API keys found)");
+            }
+        } catch (IOException e) {
+            System.out.println("- Could not read API key configuration");
+        }
     }
 
     /**

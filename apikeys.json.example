@@ -1,0 +1,5 @@
+{
+  "gemini": "your-gemini-api-key-here",
+  "gpt4": "your-openai-api-key-here", 
+  "claude": "your-anthropic-api-key-here"
+}
