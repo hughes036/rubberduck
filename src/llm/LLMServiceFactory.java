@@ -36,13 +36,19 @@ public class LLMServiceFactory {
         }
         
         try {
+            // Only allow instantiation of classes in the llm package for security
+            if (!serviceClass.getPackage().getName().equals("llm")) {
+                throw new SecurityException("Service class must be in llm package");
+            }
+
             LLMService service = serviceClass.getDeclaredConstructor().newInstance();
             service.setApiKey(apiKey);
             return service;
-        } catch (Exception e) {
+        } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Failed to create LLM service: " + serviceName, e);
+        } catch (SecurityException e) {
+            throw new IllegalArgumentException("Security violation creating service: " + serviceName, e);
         }
-    }
     
     /**
      * Returns the names of all supported LLM services registered in the factory.
