@@ -1,13 +1,50 @@
-# MIDI Processing Library
+# Rubberduck Project
 
-A Java library for processing MIDI files, designed to work with Large Language Models (LLMs). This library provides functionality to convert MIDI files to a serialized text format that can be understood by LLMs, and to convert the serialized format back to MIDI files.
+A Java project that combines MIDI processing with Gemini AI integration. This library provides functionality to convert MIDI files to a serialized text format that can be understood by LLMs, and includes a working example of Gemini AI integration.
 
 ## Features
 
 - Convert MIDI files to a serialized text format
 - Convert serialized text format back to MIDI files
 - Utility functions for working with MIDI data
+- Gemini AI integration example
 - Comprehensive test suite
+
+## Getting Started
+
+### Prerequisites
+
+- Java 21 (configured via SDKMAN)
+- Maven
+- Gemini API key
+
+### Setup
+
+1. Create an `apikey.txt` file with your Gemini API key:
+   ```bash
+   echo "your-gemini-api-key-here" > apikey.txt
+   ```
+
+2. Build and run the project:
+   ```bash
+   ./run.sh
+   ```
+
+   Or manually:
+   ```bash
+   mvn clean compile
+   export GEMINI_API_KEY=$(cat ./apikey.txt)
+   mvn exec:java
+   ```
+
+## Examples
+
+### Gemini AI Integration
+
+The project includes a working example (`src/main/java/gemini/GeminiHelloWorld.java`) that demonstrates how to:
+- Set up the Gemini client
+- Send prompts to the Gemini API
+- Process responses
 
 ## API Documentation
 
