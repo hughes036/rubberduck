@@ -221,7 +221,7 @@ public class Main {
         System.out.println();
         System.out.println("📁 API Key Configuration:");
         System.out.println("========================");
-        System.out.println("Create an 'apikeys.json' file in the project directory with the following format:");
+        System.out.println("Option 1 - JSON File (copy apikeys.json.example to apikeys.json):");
         System.out.println();
         System.out.println("{");
         System.out.println("  \"gemini\": \"your-gemini-api-key-here\",");
@@ -229,6 +229,15 @@ public class Main {
         System.out.println("  \"claude\": \"your-anthropic-api-key-here\"");
         System.out.println("}");
         System.out.println();
+        System.out.println("Option 2 - Environment Variables (more secure):");
+        System.out.println("  export GOOGLE_API_KEY=\"your-gemini-key\"");
+        System.out.println("  export OPENAI_API_KEY=\"your-openai-key\"");
+        System.out.println("  export ANTHROPIC_API_KEY=\"your-anthropic-key\"");
+        System.out.println();
+        System.out.println("🔒 Security Notes:");
+        System.out.println("- apikeys.json is gitignored for security");
+        System.out.println("- Environment variables are recommended for production");
+        System.out.println("- Never commit real API keys to version control");
         System.out.println("📝 Notes:");
         System.out.println("- Only services with non-empty API keys will be available");
         System.out.println("- You can also provide API keys directly as command line arguments");

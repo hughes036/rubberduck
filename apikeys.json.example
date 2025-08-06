@@ -1,5 +1,13 @@
 {
-  "gemini": "your-gemini-api-key-here",
-  "gpt4": "your-openai-api-key-here", 
-  "claude": "your-anthropic-api-key-here"
+  "gemini": "YOUR_GOOGLE_GEMINI_API_KEY_HERE",
+  "gpt4": "YOUR_OPENAI_API_KEY_HERE", 
+  "claude": "YOUR_ANTHROPIC_API_KEY_HERE"
 }
+
+# SECURITY NOTICE:
+# ================
+# 1. NEVER commit apikeys.json to version control
+# 2. Copy this file to apikeys.json and add your real API keys
+# 3. The real apikeys.json file is ignored by git for security
+# 4. Alternative: Use environment variables (GOOGLE_API_KEY, etc.)
+# 5. For production: Use secure secret management services

@@ -19,19 +19,19 @@ public class ApiKeyManager {
     private static final String API_KEYS_JSON_FILE = "apikeys.json";
     
     /**
-     * Loads API keys from apikeys.json file.
+     * Loads API keys from apikeys.json file or environment variables.
      *
      * @return a map of service names (in lowercase) to their corresponding API keys
-     * @throws IOException if apikeys.json file does not exist or cannot be read
+     * @throws IOException if no API keys can be found from file or environment
      */
     public static Map<String, String> loadApiKeys() throws IOException {
         Path jsonFile = Paths.get(API_KEYS_JSON_FILE);
         
-        if (!Files.exists(jsonFile)) {
-            throw new IOException("API key file not found: " + API_KEYS_JSON_FILE + ". Please create this file with your API keys.");
+        if (Files.exists(jsonFile)) {
+            return loadApiKeysFromJson(jsonFile);
+        } else {
+            return loadApiKeysFromEnvironment();
         }
-        
-        return loadApiKeysFromJson(jsonFile);
     }
     
     /**
@@ -81,6 +81,37 @@ public class ApiKeyManager {
         } catch (Exception e) {
             throw new IOException("Failed to parse " + API_KEYS_JSON_FILE + ": " + e.getMessage(), e);
         }
+    }
+    
+    /**
+     * Loads API keys from environment variables as a secure fallback.
+     * Looks for standard environment variable names for each service.
+     */
+    private static Map<String, String> loadApiKeysFromEnvironment() throws IOException {
+        Map<String, String> apiKeys = new HashMap<>();
+        
+        // Standard environment variable mappings
+        String geminiKey = System.getenv("GOOGLE_API_KEY");
+        String gpt4Key = System.getenv("OPENAI_API_KEY");
+        String claudeKey = System.getenv("ANTHROPIC_API_KEY");
+        
+        if (geminiKey != null && !geminiKey.trim().isEmpty()) {
+            apiKeys.put("gemini", geminiKey);
+        }
+        if (gpt4Key != null && !gpt4Key.trim().isEmpty()) {
+            apiKeys.put("gpt4", gpt4Key);
+        }
+        if (claudeKey != null && !claudeKey.trim().isEmpty()) {
+            apiKeys.put("claude", claudeKey);
+        }
+        
+        if (apiKeys.isEmpty()) {
+            throw new IOException("No API keys found. Please either:\n" +
+                "1. Create " + API_KEYS_JSON_FILE + " file (copy from " + API_KEYS_JSON_FILE + ".example)\n" +
+                "2. Set environment variables: GOOGLE_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY");
+        }
+        
+        return apiKeys;
     }
     
     /**
