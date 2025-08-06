@@ -1,3 +1,5 @@
+package com.rubberduck;
+
 import midi.MidiSerializer;
 import midi.MidiDeserializer;
 import midi.MidiUtils;
@@ -28,30 +30,34 @@ public class Main {
      * Expects at least four arguments: input MIDI file path, output MIDI file path, LLM service name, API key (or empty string to load from file), followed by the composition prompt.
      */
     public static void main(String[] args) {
-        try {
-            // Check if arguments are provided
-            if (args.length < 4) {
-                printUsage();
-                return;
-            }
+        // Check if arguments are provided
+        if (args.length < 4) {
+            printUsage();
+            return;
+        }
 
-            // Parse command line arguments
-            String inputMidiPath = args[0];
-            String outputMidiPath = args[1];
-            String llmService = args[2];
-            String apiKeyArg = args[3];
-            
-            // Composition prompt is all remaining arguments joined together
-            StringBuilder compositionPrompt = new StringBuilder();
-            for (int i = 4; i < args.length; i++) {
-                if (i > 4) compositionPrompt.append(" ");
-                compositionPrompt.append(args[i]);
-            }
-            
-            if (compositionPrompt.toString().trim().isEmpty()) {
+        // Parse command line arguments
+        String inputMidiPath = args[0];
+        String outputMidiPath = args[1];
+        String llmService = args[2];
+        String apiKeyArg = args[3];
+
+        // Composition prompt is all remaining arguments joined together
+        StringBuilder compositionPrompt = new StringBuilder();
+        for (int i = 4; i < args.length; i++) {
+            if (i > 4) compositionPrompt.append(" ");
+            compositionPrompt.append(args[i]);
+        }
+
+        runHeadless(inputMidiPath, outputMidiPath, llmService, apiKeyArg, compositionPrompt.toString());
+    }
+
+    public static String runHeadless(String inputMidiPath, String outputMidiPath, String llmService, String apiKeyArg, String compositionPrompt) {
+        try {
+            if (compositionPrompt.trim().isEmpty()) {
                 System.err.println("Error: Composition prompt is required");
                 printUsage();
-                return;
+                return null;
             }
 
             // Validate LLM service name against available services
@@ -60,23 +66,23 @@ public class Main {
                     System.err.println("❌ Error: LLM service '" + llmService + "' is not available.");
                     System.err.println("Available services: " + ApiKeyManager.getAvailableServices());
                     System.err.println("Please check your " + (new File("apikeys.json").exists() ? "apikeys.json" : "apikey.txt") + " file.");
-                    return;
+                    return null;
                 }
             } catch (IOException e) {
                 System.err.println("❌ Error: Could not load API key configuration: " + e.getMessage());
-                return;
+                return null;
             }
 
             // Validate input file
             File inputFile = new File(inputMidiPath);
             if (!inputFile.exists()) {
                 System.err.println("Error: Input MIDI file does not exist: " + inputMidiPath);
-                return;
+                return null;
             }
 
             if (!isMidiFile(inputFile)) {
                 System.err.println("Error: Input file is not a valid MIDI file: " + inputMidiPath);
-                return;
+                return null;
             }
 
             // Get API key
@@ -84,7 +90,7 @@ public class Main {
             if (apiKey == null || apiKey.trim().isEmpty()) {
                 System.err.println("Error: No API key found for service: " + llmService);
                 System.err.println("Either provide API key as argument or add it to apikey.txt");
-                return;
+                return null;
             }
 
             System.out.println("🎵 LLM-Powered MIDI Composer");
@@ -92,7 +98,7 @@ public class Main {
             System.out.println("Input MIDI: " + inputMidiPath);
             System.out.println("Output MIDI: " + outputMidiPath);
             System.out.println("LLM Service: " + llmService);
-            System.out.println("Composition Request: " + compositionPrompt.toString());
+            System.out.println("Composition Request: " + compositionPrompt);
             System.out.println();
 
             // Step 1: Serialize the input MIDI file
@@ -103,7 +109,7 @@ public class Main {
             // Step 2: Create LLM service and build prompt
             System.out.println("\nStep 2: Preparing LLM request...");
             LLMService llm = LLMServiceFactory.createService(llmService, apiKey);
-            String prompt = PromptBuilder.buildCompositionPrompt(serializedMidi, compositionPrompt.toString());
+            String prompt = PromptBuilder.buildCompositionPrompt(serializedMidi, compositionPrompt);
             System.out.println("✓ LLM service initialized: " + llm.getServiceName());
 
             // Step 3: Send request to LLM
@@ -138,11 +144,14 @@ public class Main {
                 System.out.println("(No additional explanation provided)");
             }
 
+            return outputMidiPath;
+
         } catch (Exception e) {
             System.err.println("❌ Error: " + e.getMessage());
             e.printStackTrace();
             System.err.println();
             printUsage();
+            return null;
         }
     }
 
@@ -262,7 +271,7 @@ public class Main {
      * @return true if the file has a MIDI extension or can be parsed as a MIDI file; false otherwise
      * @throws IOException if an I/O error occurs while accessing the file
      */
-    private static boolean isMidiFile(File file) throws IOException {
+    public static boolean isMidiFile(File file) throws IOException {
         // Check file extension first
         if (file.getName().toLowerCase().endsWith(".mid") || 
             file.getName().toLowerCase().endsWith(".midi")) {

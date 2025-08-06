@@ -1,28 +1,34 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+
 plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.9.22'
+    id 'org.jetbrains.compose' version '1.6.1'
     id 'java'
-    id 'application'
 }
 
-application {
-    mainClass = 'Main'
-}
-
-group = 'com.rubberduck'
-version = '1.0-SNAPSHOT'
+group = "com.rubberduck"
+version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://maven.pkg.jetbrains.space/public/p/compose/dev"
+    }
+    google()
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-    
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+
     // Google GenAI for Gemini integration
-    implementation 'com.google.genai:google-genai:1.0.0'
-    
+    implementation("com.google.genai:google-genai:1.0.0")
+
     // Jackson for JSON parsing
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
+
+    // Compose for Desktop
+    implementation(compose.desktop.currentOs)
 }
 
 test {
@@ -38,17 +44,38 @@ task runGemini(type: JavaExec) {
     environment System.getenv()
 }
 
-// Main application task
-application {
-    mainClass = 'Main'
+compose.desktop {
+    application {
+        mainClass = "MainKt"
+
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "Rubberduck"
+            packageVersion = "1.0.0"
+        }
+
+    }
 }
 
-// Configure the run task to set environment variables from apikeys.json
-run {
-    // Pass through all existing environment variables
-    environment System.getenv()
-    
-    // Try to load API key from apikeys.json and set environment variable
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+            exclude 'test/**'
+        }
+        kotlin {
+            srcDirs = ['src']
+            exclude 'test/**'
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test']
+        }
+    }
+}
+
+tasks.matching { it.name == "run" }.configureEach {
     doFirst {
         def apikeysFile = new File(projectDir, 'apikeys.json')
         if (apikeysFile.exists()) {
@@ -63,7 +90,6 @@ run {
             }
         }
         
-        // Also check for legacy apikey.txt
         def legacyApiKeyFile = new File(projectDir, 'apikey.txt')
         if (legacyApiKeyFile.exists() && !environment.containsKey('GOOGLE_API_KEY')) {
             try {
@@ -79,16 +105,14 @@ run {
     }
 }
 
-sourceSets {
-    main {
-        java {
-            srcDirs = ['src']
-            exclude 'test/**'
-        }
-    }
-    test {
-        java {
-            srcDirs = ['src/test']
+compose.desktop {
+    application {
+        mainClass = "MainKt"
+
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "Rubberduck"
+            packageVersion = "1.0.0"
         }
     }
 }
