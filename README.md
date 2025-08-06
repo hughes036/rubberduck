@@ -11,74 +11,76 @@ An LLM-powered MIDI composition tool that uses artificial intelligence to enhanc
 - 🛠️ **Developer-Friendly** - Comprehensive API for MIDI manipulation
 - 🧪 **Well-Tested** - Comprehensive test suite ensuring reliability
 
-## Getting Started
+## Installation
 
-This project provides AI-powered MIDI composition capabilities alongside traditional MIDI processing.
+1.  **Clone the repository:**
 
-### Prerequisites
+    ```bash
+    git clone https://github.com/your-username/rubberduck.git
+    cd rubberduck
+    ```
 
-- Java 21 (configured via SDKMAN)
-- Gradle
-- API key for your chosen LLM service (Gemini supported)
+2.  **Build the project and install the CLI:**
 
-### Setup
+    ```bash
+    ./gradlew installDist
+    ```
 
-1. Create an `apikey.txt` file with your API key:
-   ```bash
-   # Single API key (for Gemini)
-   echo "your-gemini-api-key-here" > apikey.txt
-   
-   # Or service-specific format
-   echo "gemini=your-gemini-key" > apikey.txt
-   ```
+    This will create a runnable version of the application in `build/install/rubberduck`.
 
-2. Build the project:
-   ```bash
-   ./gradlew build
-   ```
+3.  **Add the CLI to your PATH:**
+
+    For easy access, add the `bin` directory to your system's `PATH`.
+
+    *   For Bash (usually on Linux and macOS):
+
+        ```bash
+        echo 'export PATH="$PATH:'$(pwd)'/build/install/rubberduck/bin"' >> ~/.bashrc
+        source ~/.bashrc
+        ```
+
+    *   For Zsh (default on newer macOS):
+
+        ```bash
+        echo 'export PATH="$PATH:'$(pwd)'/build/install/rubberduck/bin"' >> ~/.zshrc
+        source ~/.zshrc
+        ```
+
+4.  **Configure API Keys:**
+
+    Create a file named `apikeys.json` in the root of the project and add your API keys. You can copy the example file:
+
+    ```bash
+    cp apikeys.json.example apikeys.json
+    ```
+
+    Then, edit `apikeys.json` with your keys.
 
 ## Usage
 
-### 🎵 LLM-Powered Composition (Primary Feature)
-
-Transform MIDI files using AI with natural language prompts:
+Once installed, you can use the `rubberduck` command from anywhere in your terminal.
 
 ```bash
-./gradlew run --args="input.mid output.mid gemini \"\" \"Add a walking bassline\""
+rubberduck <input-midi> <output-midi> <llm-service> <api-key> <composition-prompt>
 ```
 
 **Arguments:**
-- `input.mid` - Input MIDI file to modify
-- `output.mid` - Output path for the enhanced MIDI file  
-- `gemini` - LLM service to use (currently: gemini)
-- `""` - API key (empty string loads from apikey.txt)
-- `"composition prompt"` - What you want the AI to do
+
+*   `<input-midi>`: Path to the input MIDI file.
+*   `<output-midi>`: Path for the output MIDI file.
+*   `<llm-service>`: LLM service to use (e.g., `gemini`).
+*   `<api-key>`: Your API key. Use `""` (an empty string) to load the key from `apikeys.json`.
+*   `<composition-prompt>`: A description of the changes you want to make to the MIDI file.
 
 **Examples:**
 
 ```bash
-# Add a bassline
-./gradlew run --args="song.mid enhanced.mid gemini \"\" \"Add a walking bassline that complements the melody\""
+# Add a walking bassline to a MIDI file
+rubberduck input.mid output.mid gemini "" "Add a walking bassline"
 
-# Add drums
-./gradlew run --args="piano.mid with_drums.mid gemini \"\" \"Add a simple drum pattern with kick on 1 and 3, snare on 2 and 4\""
-
-# Add harmony
-./gradlew run --args="melody.mid harmonized.mid gemini \"\" \"Add harmonizing chord progressions in the upper register\""
-
-# Creative modifications
-./gradlew run --args="classical.mid jazz.mid gemini \"\" \"Transform this into a jazz arrangement with swing rhythm\""
+# Add a drum pattern using a specific API key
+rubberduck song.mid with_drums.mid gemini "your-api-key-here" "Add a simple rock beat"
 ```
-
-### 🔧 Traditional MIDI Processing
-
-For backward compatibility, you can still use the Gemini hello world example:
-
-```bash
-./run-gemini.sh
-```
-
-## API Documentation
 
 ### MidiSerializer
 

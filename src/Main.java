@@ -29,8 +29,16 @@ public class Main {
      */
     public static void main(String[] args) {
         try {
-            // Check if arguments are provided
-            if (args.length < 4) {
+            // If no arguments are provided, print usage and exit
+            if (args.length == 0) {
+                printUsage();
+                return;
+            }
+
+            // Check for minimum number of arguments
+            if (args.length < 5) {
+                System.err.println("❌ Error: Missing arguments.");
+                System.err.println();
                 printUsage();
                 return;
             }
@@ -203,7 +211,7 @@ public class Main {
     private static void printUsage() {
         System.out.println("🎵 LLM-Powered MIDI Composer");
         System.out.println("============================");
-        System.out.println("Usage: java -jar rubberduck.jar <input-midi> <output-midi> <llm-service> <api-key> <composition-prompt>");
+        System.out.println("Usage: rubberduck <input-midi> <output-midi> <llm-service> <api-key> <composition-prompt>");
         System.out.println();
         System.out.println("Arguments:");
         System.out.println("  <input-midi>         Path to input MIDI file");
@@ -214,10 +222,10 @@ public class Main {
         System.out.println();
         System.out.println("Examples:");
         System.out.println("  # Add a bassline using Gemini with API key from file");
-        System.out.println("  java -jar rubberduck.jar input.mid output.mid gemini \"\" \"Add a walking bassline\"");
+        System.out.println("  rubberduck input.mid output.mid gemini \"\" \"Add a walking bassline\"");
         System.out.println();
         System.out.println("  # Add drums using Gemini with inline API key");
-        System.out.println("  java -jar rubberduck.jar song.mid enhanced.mid gemini \"your-api-key\" \"Add a simple drum pattern\"");
+        System.out.println("  rubberduck song.mid enhanced.mid gemini \"your-api-key\" \"Add a simple drum pattern\"");
         System.out.println();
         System.out.println("📁 API Key Configuration:");
         System.out.println("========================");
