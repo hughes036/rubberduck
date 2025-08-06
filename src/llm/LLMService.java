@@ -15,16 +15,9 @@ public interface LLMService {
     String processCompositionRequest(String prompt) throws Exception;
     
     /**
- * Returns the name of the LLM service.
- *
- * @return the service name, such as "gemini", "gpt4", or "claude"
- */
+     * Returns the name of the LLM service.
+     *
+     * @return the service name, such as "gemini", "gpt4", or "claude"
+     */
     String getServiceName();
-    
-    /**
- * Sets the API key used to authenticate requests to the LLM service.
- *
- * @param apiKey the API key for the service
- */
-    void setApiKey(String apiKey);
 }

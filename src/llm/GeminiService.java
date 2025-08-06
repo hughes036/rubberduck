@@ -2,6 +2,7 @@ package llm;
 
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
+import java.util.Optional;
 
 /**
  * Gemini LLM service implementation.
@@ -13,21 +14,30 @@ public class GeminiService implements LLMService {
     private Client client;
     
     /**
-     * Constructs a GeminiService instance without initializing the client.
-     *
-     * The client will be initialized when an API key is set using {@link #setApiKey(String)}.
+     * Constructs a GeminiService instance by reading the API key from the GOOGLE_API_KEY environment variable.
+     * 
+     * @throws RuntimeException if GOOGLE_API_KEY is not set or client initialization fails
      */
     public GeminiService() {
-        // Constructor - client will be initialized when API key is set
-    }
-    
-    /**
-     * Constructs a GeminiService instance with the specified API key and initializes the Gemini client.
-     *
-     * @param apiKey the API key used for authenticating requests to the Gemini service
-     */
-    public GeminiService(String apiKey) {
-        setApiKey(apiKey);
+        // Read API key from environment variable as required by Google GenAI library
+        String envApiKey = System.getenv("GOOGLE_API_KEY");
+        if (envApiKey == null || envApiKey.trim().isEmpty()) {
+            throw new RuntimeException(
+                "GOOGLE_API_KEY environment variable not set. " +
+                "The Google GenAI library requires this environment variable. " +
+                "Please set it manually: export GOOGLE_API_KEY=\"your-api-key\" " +
+                "Or use './gradlew run' which automatically sets this from apikeys.json."
+            );
+        }
+        
+        this.apiKey = envApiKey;
+        
+        try {
+            // Initialize the client (reads from GOOGLE_API_KEY environment variable)
+            this.client = new Client();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize Gemini client: " + e.getMessage(), e);
+        }
     }
     
     /**
@@ -41,7 +51,7 @@ public class GeminiService implements LLMService {
     @Override
     public String processCompositionRequest(String prompt) throws Exception {
         if (client == null) {
-            throw new IllegalStateException("API key not set. Call setApiKey() first.");
+            throw new IllegalStateException("Gemini client not initialized. This should not happen if constructor succeeded.");
         }
         
         try {
@@ -65,21 +75,5 @@ public class GeminiService implements LLMService {
     @Override
     public String getServiceName() {
         return "gemini";
-    }
-    
-    /**
-     * Sets the API key for authenticating with the Gemini service and initializes the client.
-     *
-     * This method also sets the required system property for the Gemini client to use the provided API key.
-     */
-    @Override
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
-        
-        // Set the environment variable that the Gemini client expects
-        System.setProperty("GOOGLE_API_KEY", apiKey);
-        
-        // Initialize the client
-        this.client = new Client();
     }
 }
