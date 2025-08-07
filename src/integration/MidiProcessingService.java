@@ -3,6 +3,7 @@ package integration;
 import llm.ApiKeyManager;
 import llm.LLMServiceFactory;
 import llm.LLMService;
+import llm.PromptBuilder;
 import midi.MidiDeserializer;
 import midi.MidiSerializer;
 import java.io.File;
@@ -117,10 +118,15 @@ public class MidiProcessingService {
             String llmResponse = service.processCompositionRequest(fullPrompt);
             System.out.println("🔍 DEBUG: LLM response received, length: " + llmResponse.length() + " characters");
             
+            // Extract serialized MIDI data from LLM response
+            System.out.println("🔍 DEBUG: Extracting serialized MIDI data from LLM response...");
+            String extractedMidi = PromptBuilder.extractSerializedMidi(llmResponse);
+            System.out.println("🔍 DEBUG: Extracted MIDI data, length: " + extractedMidi.length() + " characters");
+            
             // Deserialize back to MIDI file
             File outputFile = new File(outputFilePath);
             System.out.println("🔍 DEBUG: Deserializing response to MIDI file: " + outputFile.getAbsolutePath());
-            MidiDeserializer.deserializeToMidiFile(llmResponse, outputFile);
+            MidiDeserializer.deserializeToMidiFile(extractedMidi, outputFile);
             System.out.println("🔍 DEBUG: MIDI file written successfully");
             
             String successMsg = "Successfully processed MIDI file. Output saved to: " + outputFilePath;
@@ -135,11 +141,7 @@ public class MidiProcessingService {
     }
     
     private String buildPrompt(String serializedMidi, String userPrompt) {
-        return "You are a MIDI composition assistant. Given the following serialized MIDI data and user request, " +
-               "please modify the MIDI data according to the request and return the modified serialized MIDI data.\n\n" +
-               "Original MIDI data:\n" + serializedMidi + "\n\n" +
-               "User request: " + userPrompt + "\n\n" +
-               "Please return only the modified serialized MIDI data, maintaining the same format as the input.";
+        return PromptBuilder.buildCompositionPrompt(serializedMidi, userPrompt);
     }
     
     public Set<String> getAvailableServices() {
@@ -219,5 +221,12 @@ public class MidiProcessingService {
      */
     public double getDuration() {
         return MidiPlaybackService.getInstance().getDuration();
+    }
+
+    /**
+     * Sets the current playback position as a percentage (0.0 to 1.0).
+     */
+    public void setPosition(double position) {
+        MidiPlaybackService.getInstance().setPosition(position);
     }
 }

@@ -28,6 +28,12 @@ interface MidiPlaybackService {
     fun getPosition(): Double
     
     /**
+     * Sets the current playback position as a percentage (0.0 to 1.0).
+     * @param position The position to seek to (0.0 = start, 1.0 = end)
+     */
+    fun setPosition(position: Double)
+    
+    /**
      * Gets the duration of the current file in seconds.
      */
     fun getDuration(): Double

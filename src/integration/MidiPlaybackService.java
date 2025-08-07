@@ -83,4 +83,11 @@ public class MidiPlaybackService {
     public double getDuration() {
         return player.getDuration();
     }
+
+    /**
+     * Sets the current playback position as a percentage (0.0 to 1.0).
+     */
+    public void setPosition(double position) {
+        player.setPosition(position);
+    }
 }
