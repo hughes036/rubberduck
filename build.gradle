@@ -5,6 +5,7 @@ plugins {
 
 application {
     mainClass = 'Main'
+    applicationName = 'rubberduck'
 }
 
 group = 'com.rubberduck'
@@ -38,10 +39,6 @@ task runGemini(type: JavaExec) {
     environment System.getenv()
 }
 
-// Main application task
-application {
-    mainClass = 'Main'
-}
 
 // Configure the run task to set environment variables from apikeys.json
 run {
