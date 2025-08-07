@@ -74,14 +74,45 @@ fun MidiRowComponent(
             // MIDI file section
             MidiFileSection(
                 midiFile = row.inputFile,
-                label = "Input MIDI"
+                label = "Input MIDI",
+                onPlayPause = { midiFile ->
+                    println("🔍 DEBUG: Play/Pause clicked for input file")
+                    println("  Current isPlaying: ${midiFile.isPlaying}")
+                    println("  Will toggle to: ${!midiFile.isPlaying}")
+                    onRowUpdate(row.copy(
+                        inputFile = midiFile.copy(isPlaying = !midiFile.isPlaying)
+                    ))
+                },
+                onStop = { midiFile ->
+                    println("🔍 DEBUG: Stop clicked for input file")
+                    println("  Current isPlaying: ${midiFile.isPlaying}")
+                    onRowUpdate(row.copy(
+                        inputFile = midiFile.copy(
+                            isPlaying = false,
+                            currentPosition = 0f
+                        )
+                    ))
+                }
             )
             
             // Output file section (if available)
             if (row.outputFile != null) {
                 MidiFileSection(
                     midiFile = row.outputFile,
-                    label = "Output MIDI"
+                    label = "Output MIDI",
+                    onPlayPause = { midiFile ->
+                        onRowUpdate(row.copy(
+                            outputFile = midiFile.copy(isPlaying = !midiFile.isPlaying)
+                        ))
+                    },
+                    onStop = { midiFile ->
+                        onRowUpdate(row.copy(
+                            outputFile = midiFile.copy(
+                                isPlaying = false,
+                                currentPosition = 0f
+                            )
+                        ))
+                    }
                 )
             }
             
@@ -102,7 +133,12 @@ fun MidiRowComponent(
                 selectedService = row.selectedLlm,
                 availableServices = availableServices,
                 onServiceSelected = { service ->
-                    onRowUpdate(row.copy(selectedLlm = service))
+                    println("🔍 DEBUG: Service selected callback triggered: $service")
+                    println("  Row ID: ${row.id}")
+                    println("  Previous service: ${row.selectedLlm}")
+                    val updatedRow = row.copy(selectedLlm = service)
+                    println("  Updated row: $updatedRow")
+                    onRowUpdate(updatedRow)
                 },
                 enabled = !row.isProcessing
             )
@@ -148,7 +184,9 @@ fun MidiRowComponent(
 @Composable
 fun MidiFileSection(
     midiFile: MidiFile?,
-    label: String
+    label: String,
+    onPlayPause: ((MidiFile) -> Unit)? = null,
+    onStop: ((MidiFile) -> Unit)? = null
 ) {
     Column {
         Text(
@@ -174,22 +212,31 @@ fun MidiFileSection(
                     )
                 }
                 
-                // Playback controls (placeholder for now)
+                // Playback controls
                 Row {
                     IconButton(
-                        onClick = { /* TODO: Implement play/pause */ }
+                        onClick = { 
+                            println("🔍 DEBUG: Play/Pause button clicked")
+                            println("  MidiFile: ${midiFile.name}")
+                            println("  Current isPlaying: ${midiFile.isPlaying}")
+                            onPlayPause?.invoke(midiFile) 
+                        }
                     ) {
                         Text(if (midiFile.isPlaying) "⏸️" else "▶️")
                     }
                     IconButton(
-                        onClick = { /* TODO: Implement stop */ }
+                        onClick = { 
+                            println("🔍 DEBUG: Stop button clicked")
+                            println("  MidiFile: ${midiFile.name}")
+                            onStop?.invoke(midiFile) 
+                        }
                     ) {
                         Text("⏹️")
                     }
                 }
             }
             
-            // Progress bar (placeholder)
+            // Progress bar
             LinearProgressIndicator(
                 progress = midiFile.currentPosition / maxOf(midiFile.duration, 1f),
                 modifier = Modifier.fillMaxWidth()
@@ -223,7 +270,13 @@ fun LlmServiceSelector(
             ) {
                 RadioButton(
                     selected = selectedService == service,
-                    onClick = { onServiceSelected(service) },
+                    onClick = { 
+                        println("🔍 DEBUG: Radio button clicked for service: $service")
+                        println("  Currently selected: $selectedService")
+                        println("  Service available: ${service in availableServices}")
+                        println("  Enabled: ${enabled && service in availableServices}")
+                        onServiceSelected(service)
+                    },
                     enabled = enabled && service in availableServices
                 )
                 Text(

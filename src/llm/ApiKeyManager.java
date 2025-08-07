@@ -86,14 +86,26 @@ public class ApiKeyManager {
     /**
      * Loads API keys from environment variables as a secure fallback.
      * Looks for standard environment variable names for each service.
+     * Also checks system properties as a fallback for GUI applications.
      */
     private static Map<String, String> loadApiKeysFromEnvironment() throws IOException {
         Map<String, String> apiKeys = new HashMap<>();
         
-        // Standard environment variable mappings
+        // Standard environment variable mappings (check both env vars and system properties)
         String geminiKey = System.getenv("GOOGLE_API_KEY");
+        if (geminiKey == null || geminiKey.trim().isEmpty()) {
+            geminiKey = System.getProperty("GOOGLE_API_KEY");
+        }
+        
         String gpt4Key = System.getenv("OPENAI_API_KEY");
+        if (gpt4Key == null || gpt4Key.trim().isEmpty()) {
+            gpt4Key = System.getProperty("OPENAI_API_KEY");
+        }
+        
         String claudeKey = System.getenv("ANTHROPIC_API_KEY");
+        if (claudeKey == null || claudeKey.trim().isEmpty()) {
+            claudeKey = System.getProperty("ANTHROPIC_API_KEY");
+        }
         
         if (geminiKey != null && !geminiKey.trim().isEmpty()) {
             apiKeys.put("gemini", geminiKey);

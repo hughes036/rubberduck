@@ -34,13 +34,23 @@ fun RubberDuckDesktopApp() {
     val processingService = remember { MidiProcessingService() }
     val scope = rememberCoroutineScope()
     
+    // Debug: Print available services
+    val availableServiceStrings = processingService.availableServices
+    println("🔍 DEBUG: Available services from Java: $availableServiceStrings")
+    
+    val availableServices = try {
+        availableServiceStrings.map { serviceName -> LlmService.valueOf(serviceName) }.toSet()
+    } catch (e: Exception) {
+        println("❌ ERROR mapping services: ${e.message}")
+        emptySet<LlmService>()
+    }
+    println("🔍 DEBUG: Mapped services: $availableServices")
+    
     var appState by remember { 
         mutableStateOf(
             AppState(
                 rows = emptyList(),
-                availableServices = processingService.availableServices.map { 
-                    LlmService.valueOf(it) 
-                }.toSet()
+                availableServices = availableServices
             )
         )
     }
@@ -68,9 +78,17 @@ fun RubberDuckDesktopApp() {
             }
         },
         onRowUpdate = { rowId, updatedRow ->
+            println("🔍 DEBUG: Row update triggered for row $rowId")
+            println("  Updated row: $updatedRow")
+            
             appState = appState.copy(
                 rows = appState.rows.map { 
-                    if (it.id == rowId) updatedRow else it 
+                    if (it.id == rowId) {
+                        println("🔍 DEBUG: Found matching row, updating...")
+                        updatedRow
+                    } else {
+                        it
+                    }
                 }
             )
         },
@@ -115,7 +133,7 @@ private suspend fun processRow(
         val result = processingService.processWithLLM(
             row.inputFile.path,
             row.prompt,
-            row.selectedLlm.name,
+            row.selectedLlm.name.lowercase(),
             outputFile.absolutePath
         )
         

@@ -41,44 +41,95 @@ public class MidiProcessingService {
         String outputFilePath
     ) {
         try {
-            // Load API keys
-            ApiKeyManager apiKeyManager = new ApiKeyManager();
-            String geminiApiKey = apiKeyManager.getApiKey("gemini");
-            if (geminiApiKey == null) {
-                return ProcessingResult.failure(new Exception("Gemini API key not found"));
+            System.out.println("🔍 DEBUG: processWithLLM called");
+            System.out.println("  Input file: " + inputFilePath);
+            System.out.println("  Prompt: " + prompt);
+            System.out.println("  LLM service: " + llmService);
+            System.out.println("  Output file: " + outputFilePath);
+            
+            // Load API keys using static method
+            System.out.println("🔍 DEBUG: Attempting to load API key for: " + llmService);
+            String apiKey = ApiKeyManager.getApiKey(llmService);
+            System.out.println("🔍 DEBUG: API key loaded: " + (apiKey != null ? "YES (length=" + apiKey.length() + ")" : "NO"));
+            
+            if (apiKey == null) {
+                String errorMsg = "API key not found for service: " + llmService;
+                System.out.println("❌ ERROR: " + errorMsg);
+                return ProcessingResult.failure(new Exception(errorMsg));
             }
             
-                        // Create LLM service based on selection
+            // Create LLM service based on selection
+            System.out.println("🔍 DEBUG: Creating LLM service for: " + llmService);
             LLMService service;
             switch (llmService.toLowerCase()) {
                 case "gemini":
-                    service = LLMServiceFactory.createService("gemini", geminiApiKey);
+                    System.out.println("🔍 DEBUG: Creating Gemini service with API key");
+                    // Gemini service reads from GOOGLE_API_KEY environment variable
+                    // Set it temporarily for this service creation
+                    String originalGoogleApiKey = System.getProperty("GOOGLE_API_KEY");
+                    System.setProperty("GOOGLE_API_KEY", apiKey);
+                    try {
+                        service = LLMServiceFactory.createService("gemini", apiKey);
+                    } finally {
+                        // Restore original value
+                        if (originalGoogleApiKey != null) {
+                            System.setProperty("GOOGLE_API_KEY", originalGoogleApiKey);
+                        } else {
+                            System.clearProperty("GOOGLE_API_KEY");
+                        }
+                    }
+                    break;
+                case "gpt4":
+                    System.out.println("🔍 DEBUG: Creating GPT-4 service with API key");
+                    service = LLMServiceFactory.createService("gpt4", apiKey);
+                    break;
+                case "claude":
+                    System.out.println("🔍 DEBUG: Creating Claude service with API key");
+                    service = LLMServiceFactory.createService("claude", apiKey);
                     break;
                 default:
-                    return ProcessingResult.failure(new Exception("Unsupported LLM service: " + llmService));
+                    String errorMsg = "Unsupported LLM service: " + llmService;
+                    System.out.println("❌ ERROR: " + errorMsg);
+                    return ProcessingResult.failure(new Exception(errorMsg));
             }
             
             // Process MIDI file
             File inputFile = new File(inputFilePath);
+            System.out.println("🔍 DEBUG: Checking input file: " + inputFile.getAbsolutePath());
             if (!inputFile.exists()) {
-                return ProcessingResult.failure(new Exception("Input file does not exist: " + inputFilePath));
+                String errorMsg = "Input file does not exist: " + inputFilePath;
+                System.out.println("❌ ERROR: " + errorMsg);
+                return ProcessingResult.failure(new Exception(errorMsg));
             }
+            System.out.println("🔍 DEBUG: Input file exists, proceeding with serialization");
             
             // Serialize MIDI to text (note: this reads and serializes the file)
+            System.out.println("🔍 DEBUG: Serializing MIDI file...");
             String serializedMidi = MidiSerializer.serializeMidiFile(inputFile);
+            System.out.println("🔍 DEBUG: MIDI serialized, length: " + serializedMidi.length() + " characters");
             
             // Create full prompt with serialized MIDI data
             String fullPrompt = buildPrompt(serializedMidi, prompt);
+            System.out.println("🔍 DEBUG: Full prompt created, length: " + fullPrompt.length() + " characters");
             
             // Get LLM response (this returns modified MIDI data)
+            System.out.println("🔍 DEBUG: Sending request to LLM service...");
             String llmResponse = service.processCompositionRequest(fullPrompt);
+            System.out.println("🔍 DEBUG: LLM response received, length: " + llmResponse.length() + " characters");
             
             // Deserialize back to MIDI file
             File outputFile = new File(outputFilePath);
+            System.out.println("🔍 DEBUG: Deserializing response to MIDI file: " + outputFile.getAbsolutePath());
             MidiDeserializer.deserializeToMidiFile(llmResponse, outputFile);
+            System.out.println("🔍 DEBUG: MIDI file written successfully");
             
-            return ProcessingResult.success("Successfully processed MIDI file. Output saved to: " + outputFilePath);
+            String successMsg = "Successfully processed MIDI file. Output saved to: " + outputFilePath;
+            System.out.println("✅ SUCCESS: " + successMsg);
+            return ProcessingResult.success(successMsg);
         } catch (Exception e) {
+            String errorMsg = "Error processing MIDI: " + e.getMessage();
+            System.out.println("❌ ERROR: " + errorMsg);
+            e.printStackTrace();
             return ProcessingResult.failure(e);
         }
     }
@@ -95,11 +146,9 @@ public class MidiProcessingService {
         Set<String> available = new HashSet<>();
         
         try {
-            ApiKeyManager apiKeyManager = new ApiKeyManager();
-            
-            // Check for Gemini API key
+            // Check for Gemini API key using static method
             try {
-                String geminiKey = apiKeyManager.getApiKey("gemini");
+                String geminiKey = ApiKeyManager.getApiKey("gemini");
                 if (geminiKey != null && !geminiKey.trim().isEmpty()) {
                     available.add("GEMINI");
                 }
@@ -107,7 +156,25 @@ public class MidiProcessingService {
                 System.out.println("Warning: Could not load Gemini API key: " + e.getMessage());
             }
             
-            // TODO: Check for other services when implemented
+            // Check for GPT-4 API key
+            try {
+                String gpt4Key = ApiKeyManager.getApiKey("gpt4");
+                if (gpt4Key != null && !gpt4Key.trim().isEmpty()) {
+                    available.add("GPT4");
+                }
+            } catch (Exception e) {
+                System.out.println("Warning: Could not load GPT-4 API key: " + e.getMessage());
+            }
+            
+            // Check for Claude API key
+            try {
+                String claudeKey = ApiKeyManager.getApiKey("claude");
+                if (claudeKey != null && !claudeKey.trim().isEmpty()) {
+                    available.add("CLAUDE");
+                }
+            } catch (Exception e) {
+                System.out.println("Warning: Could not load Claude API key: " + e.getMessage());
+            }
             
         } catch (Exception e) {
             System.out.println("Warning: Could not load API keys: " + e.getMessage());

@@ -7,11 +7,6 @@ plugins {
 group = 'com.rubberduck'
 version = '1.0-SNAPSHOT'
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
-
 repositories {
     mavenCentral()
     google()
@@ -20,8 +15,10 @@ repositories {
 
 kotlin {
     jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = '17'
+        compilations.main {
+            compileJavaTaskProvider.configure {
+                targetCompatibility = '11'
+            }
         }
         withJava()
     }
@@ -58,29 +55,6 @@ compose.desktop {
                         org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb)
             packageName = "RubberDuck"
             packageVersion = "1.0.0"
-        }
-        jvmArgs("--add-exports", "java.desktop/sun.java2d=ALL-UNNAMED")
-    }
-}
-
-// Configure the Compose run task to load API keys
-tasks.whenTaskAdded { task ->
-    if (task.name == 'run' || task.name == 'runDistributable') {
-        task.doFirst {
-            def apikeysFile = new File(projectDir, 'apikeys.json')
-            if (apikeysFile.exists()) {
-                try {
-                    def json = new groovy.json.JsonSlurper().parseText(apikeysFile.text)
-                    if (json.gemini && !json.gemini.toString().trim().isEmpty()) {
-                        // Set both system property AND environment variable for GUI
-                        System.setProperty('GOOGLE_API_KEY', json.gemini)
-                        task.environment('GOOGLE_API_KEY', json.gemini)
-                        println "✓ Loaded Gemini API key from apikeys.json for GUI"
-                    }
-                } catch (Exception e) {
-                    println "Warning: Could not parse apikeys.json: ${e.message}"
-                }
-            }
         }
     }
 }
