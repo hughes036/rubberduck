@@ -4,77 +4,6 @@ plugins {
     id 'org.jetbrains.compose' version '1.5.11'
 }
 
-group = 'com.rubberduck'
-version = '1.0-SNAPSHOT'
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
-
-repositories {
-    mavenCentral()
-    google()
-    maven { url = 'https://maven.pkg.jetbrains.space/public/p/compose/dev' }
-}
-
-kotlin {
-    jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = '17'
-        }
-        withJava()
-    }
-    
-    sourceSets {
-        commonMain {
-            dependencies {
-                implementation compose.desktop.common
-                implementation compose.material3
-                implementation compose.ui
-                implementation compose.foundation
-                implementation compose.runtime
-                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
-            }
-        }
-        
-        jvmMain {
-            dependencies {
-                implementation compose.desktop.currentOs
-                implementation 'com.google.genai:google-genai:1.0.0'
-                implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
-                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.7.3'
-            }
-        }
-    }
-}
-
-compose.desktop {
-    application {
-        mainClass = "ui.DesktopAppKt"
-        nativeDistributions {
-            targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg, 
-                        org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi, 
-                        org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb)
-            packageName = "RubberDuck"
-            packageVersion = "1.0.0"
-        }
-    }
-}
-
-dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-    
-    // Keep existing dependencies for CLI compatibility
-    implementation 'com.google.genai:google-genai:1.0.0'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
-}
-
-test {
-    useJUnitPlatform()
-}
-
 // CLI application configuration
 task runCLI(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
@@ -116,13 +45,57 @@ task runCLI(type: JavaExec) {
     }
 }
 
-// Custom task to run Gemini Hello World example
-task runGemini(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'gemini.GeminiHelloWorld'
+group = 'com.rubberduck'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    google()
+    maven { url = 'https://maven.pkg.jetbrains.space/public/p/compose/dev' }
+}
+
+kotlin {
+    jvm {
+        compilations.all {
+            kotlinOptions.jvmTarget = "11"
+        }
+        withJava()
+    }
     
-    // Pass through environment variables
-    environment System.getenv()
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation compose.desktop.common
+                implementation compose.material3
+                implementation compose.ui
+                implementation compose.foundation
+                implementation compose.runtime
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+            }
+        }
+        
+        jvmMain {
+            dependencies {
+                implementation compose.desktop.currentOs
+                implementation 'com.google.genai:google-genai:1.0.0'
+                implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.7.3'
+            }
+        }
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "ui.DesktopAppKt"
+        nativeDistributions {
+            targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg, 
+                        org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi, 
+                        org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb)
+            packageName = "RubberDuck"
+            packageVersion = "1.0.0"
+        }
+    }
 }
 
 // UI application task
@@ -138,7 +111,49 @@ tasks.register('packageUI') {
     dependsOn 'packageDistributionForCurrentOS'
 }
 
-// Java source configuration for CLI components
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    
+    // Keep existing dependencies for CLI compatibility
+    implementation 'com.google.genai:google-genai:1.0.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Custom task to run Gemini Hello World example
+task runGemini(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'gemini.GeminiHelloWorld'
+    
+    // Pass through environment variables
+    environment System.getenv()
+}
+
+sourceSets {
+
+// Tasks for running different versions
+tasks.register('runUI') {
+    group = 'application'
+    description = 'Run the Compose UI application'
+    dependsOn 'jvmRun'
+}
+
+tasks.register('runCLI') {
+    group = 'application'
+    description = 'Run the CLI application'
+    dependsOn 'run'
+}
+
+tasks.register('packageUI') {
+    group = 'distribution'
+    description = 'Package the UI application for distribution'
+    dependsOn 'packageDistributionForCurrentOS'
+}
+
 sourceSets {
     main {
         java {
