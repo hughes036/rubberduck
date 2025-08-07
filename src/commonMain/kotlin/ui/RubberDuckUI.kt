@@ -13,6 +13,7 @@ import model.*
 @Composable
 fun RubberDuckApp(
     state: AppState,
+    playbackService: model.MidiPlaybackService,
     onAddMidiFile: () -> Unit,
     onRowUpdate: (String, MidiRow) -> Unit,
     onProcessRequest: (String) -> Unit
@@ -38,6 +39,7 @@ fun RubberDuckApp(
                 MidiRowComponent(
                     row = row,
                     availableServices = state.availableServices,
+                    playbackService = playbackService,
                     onRowUpdate = { updatedRow -> onRowUpdate(row.id, updatedRow) },
                     onProcessRequest = { onProcessRequest(row.id) }
                 )
@@ -60,6 +62,7 @@ fun RubberDuckApp(
 fun MidiRowComponent(
     row: MidiRow,
     availableServices: Set<LlmService>,
+    playbackService: model.MidiPlaybackService,
     onRowUpdate: (MidiRow) -> Unit,
     onProcessRequest: () -> Unit
 ) {
@@ -79,13 +82,21 @@ fun MidiRowComponent(
                     println("🔍 DEBUG: Play/Pause clicked for input file")
                     println("  Current isPlaying: ${midiFile.isPlaying}")
                     println("  Will toggle to: ${!midiFile.isPlaying}")
+                    
+                    // Actually call the playback service
+                    val nowPlaying = playbackService.playPause(midiFile.path)
+                    
                     onRowUpdate(row.copy(
-                        inputFile = midiFile.copy(isPlaying = !midiFile.isPlaying)
+                        inputFile = midiFile.copy(isPlaying = nowPlaying)
                     ))
                 },
                 onStop = { midiFile ->
                     println("🔍 DEBUG: Stop clicked for input file")
                     println("  Current isPlaying: ${midiFile.isPlaying}")
+                    
+                    // Actually call the playback service
+                    playbackService.stop(midiFile.path)
+                    
                     onRowUpdate(row.copy(
                         inputFile = midiFile.copy(
                             isPlaying = false,
@@ -101,11 +112,22 @@ fun MidiRowComponent(
                     midiFile = row.outputFile,
                     label = "Output MIDI",
                     onPlayPause = { midiFile ->
+                        println("🔍 DEBUG: Play/Pause clicked for output file")
+                        println("  Current isPlaying: ${midiFile.isPlaying}")
+                        
+                        // Actually call the playback service
+                        val nowPlaying = playbackService.playPause(midiFile.path)
+                        
                         onRowUpdate(row.copy(
-                            outputFile = midiFile.copy(isPlaying = !midiFile.isPlaying)
+                            outputFile = midiFile.copy(isPlaying = nowPlaying)
                         ))
                     },
                     onStop = { midiFile ->
+                        println("🔍 DEBUG: Stop clicked for output file")
+                        
+                        // Actually call the playback service
+                        playbackService.stop(midiFile.path)
+                        
                         onRowUpdate(row.copy(
                             outputFile = midiFile.copy(
                                 isPlaying = false,

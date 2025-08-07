@@ -182,4 +182,42 @@ public class MidiProcessingService {
         
         return available;
     }
+    
+    /**
+     * Plays or pauses the specified MIDI file.
+     * @param filePath The path to the MIDI file
+     * @return true if now playing, false if paused
+     */
+    public boolean playPause(String filePath) {
+        return MidiPlaybackService.getInstance().playPause(filePath);
+    }
+    
+    /**
+     * Stops playback of the specified MIDI file.
+     * @param filePath The path to the MIDI file
+     */
+    public void stop(String filePath) {
+        MidiPlaybackService.getInstance().stop(filePath);
+    }
+    
+    /**
+     * Returns true if currently playing.
+     */
+    public boolean isPlaying() {
+        return MidiPlaybackService.getInstance().isPlaying();
+    }
+    
+    /**
+     * Gets the current playback position as a percentage (0.0 to 1.0).
+     */
+    public double getPosition() {
+        return MidiPlaybackService.getInstance().getPosition();
+    }
+    
+    /**
+     * Gets the duration of the current file in seconds.
+     */
+    public double getDuration() {
+        return MidiPlaybackService.getInstance().getDuration();
+    }
 }

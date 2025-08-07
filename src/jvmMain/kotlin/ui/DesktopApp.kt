@@ -32,6 +32,7 @@ fun main() = application {
 @Composable
 fun RubberDuckDesktopApp() {
     val processingService = remember { MidiProcessingService() }
+    val playbackService = remember { JvmMidiPlaybackService(processingService) }
     val scope = rememberCoroutineScope()
     
     // Debug: Print available services
@@ -57,6 +58,7 @@ fun RubberDuckDesktopApp() {
     
     RubberDuckApp(
         state = appState,
+        playbackService = playbackService,
         onAddMidiFile = {
             selectMidiFile { selectedFile ->
                 val newRow = MidiRow(
