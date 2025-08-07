@@ -39,7 +39,41 @@ This project provides AI-powered MIDI composition capabilities alongside traditi
 
 ## Usage
 
-### 🎵 LLM-Powered Composition (Primary Feature)
+This project provides a GUI for interacting with the LLM-powered MIDI composition tool.
+
+### Running the GUI
+
+To run the GUI, use the following command:
+
+```bash
+./gradlew run
+```
+
+This will open a window where you can select a MIDI file, enter a prompt, select an LLM, and generate a new MIDI file.
+
+### GUI Features
+
+- **Select MIDI File**: Click the "Select MIDI File" button to open a file chooser and select a MIDI file.
+- **MIDI Visualization**: Once a file is selected, a visualization of the MIDI data will be displayed.
+- **LLM Prompt**: Enter a prompt in the text field to specify what you want the LLM to do to the music.
+- **LLM Selection**: Select an LLM from the radio button group.
+- **Submit**: Click the "Submit" button to send the request to the LLM.
+- **Generated Files**: The generated MIDI files will be listed at the bottom of the window.
+
+### Debugging in IntelliJ IDEA
+
+To debug the application in IntelliJ IDEA, you can create a new "Run/Debug Configuration" with the following settings:
+
+- **Main class**: `MainKt`
+- **Working directory**: The root directory of the project.
+
+You can then set breakpoints in the code and run the application in debug mode.
+
+###  CLI Usage (Legacy)
+
+The original CLI tool is still available for backward compatibility.
+
+#### 🎵 LLM-Powered Composition (Primary Feature)
 
 Transform MIDI files using AI with natural language prompts:
 
@@ -70,7 +104,7 @@ Transform MIDI files using AI with natural language prompts:
 ./gradlew run --args="classical.mid jazz.mid gemini \"\" \"Transform this into a jazz arrangement with swing rhythm\""
 ```
 
-### 🔧 Traditional MIDI Processing
+#### 🔧 Traditional MIDI Processing
 
 For backward compatibility, you can still use the Gemini hello world example:
 
