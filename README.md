@@ -11,6 +11,25 @@ An LLM-powered MIDI composition tool that uses artificial intelligence to enhanc
 - 🛠️ **Developer-Friendly** - Comprehensive API for MIDI manipulation
 - 🧪 **Well-Tested** - Comprehensive test suite ensuring reliability
 
+## Quick Start
+
+### 🚀 For Users (Install CLI)
+```bash
+git clone https://github.com/your-username/rubberduck.git
+cd rubberduck
+./gradlew installDist
+export PATH="$PATH:$(pwd)/build/install/rubberduck/bin"
+rubberduck input.mid output.mid gemini "" "Add a walking bassline"
+```
+
+### 🔧 For Developers (Use Gradle)
+```bash
+git clone https://github.com/your-username/rubberduck.git
+cd rubberduck
+# Set up your API key in apikeys.json
+./gradlew run --args="example.mid output.mid gemini \"\" \"Add drums\""
+```
+
 ## Installation
 
 1.  **Clone the repository:**
@@ -80,6 +99,46 @@ rubberduck input.mid output.mid gemini "" "Add a walking bassline"
 
 # Add a drum pattern using a specific API key
 rubberduck song.mid with_drums.mid gemini "your-api-key-here" "Add a simple rock beat"
+```
+
+### Development Usage with Gradle
+
+For development purposes, you can run the tool directly with Gradle without installing it first. This is especially useful when you're modifying the code and want to test changes quickly.
+
+```bash
+# Basic Gradle run command
+./gradlew run --args="input.mid output.mid gemini \"\" \"Add a walking bassline\""
+
+# Add drums to an existing melody
+./gradlew run --args="example.mid enhanced.mid gemini \"\" \"Add a simple rock drum pattern\""
+
+# Create harmony parts
+./gradlew run --args="melody.mid harmonized.mid gemini \"\" \"Add three-part vocal harmony\""
+
+# Use a custom API key inline
+./gradlew run --args="song.mid final.mid gemini \"your-api-key\" \"Add bass and percussion\""
+```
+
+**Note:** When using `--args` with Gradle:
+- Wrap the entire argument string in quotes
+- Use `\"\"` for empty strings (like when loading API key from file)
+- Escape inner quotes with backslashes
+- The Gradle run task will automatically load your API key from `apikeys.json` and set the `GOOGLE_API_KEY` environment variable
+
+**Development Examples:**
+
+```bash
+# Test with a simple composition change
+./gradlew run --args="example.mid test-output.mid gemini \"\" \"make it sound more jazzy\""
+
+# Add multiple instruments
+./gradlew run --args="basic.mid full-band.mid gemini \"\" \"add drums, bass, and piano accompaniment\""
+
+# Modify existing arrangement
+./gradlew run --args="song.mid remix.mid gemini \"\" \"change the drum pattern to bossa nova style\""
+
+# Quick development iteration
+./gradlew run --args="input.mid output.mid gemini \"\" \"add a simple snare on beat 2\""
 ```
 
 ### MidiSerializer
@@ -218,57 +277,93 @@ To run the tests, run:
 
 ### Running the Application
 
-To run the application in demo mode (without arguments), run:
+To run the application and see usage instructions, run:
 
 ```bash
 ./gradlew run
 ```
 
-This will run the `Main` class, which demonstrates the usage of the MIDI processing library.
+This will show the help message with all available options and examples.
 
-### Using the CLI Tool
+### Using the CLI Tool with Gradle
 
-The application can also be used as a command-line tool to convert between MIDI files and serialized text format. To use the CLI tool:
+The application is primarily used as a command-line tool for LLM-powered MIDI composition. During development, you can run it directly with Gradle:
 
 ```bash
-./gradlew run --args="<input-file>"
+./gradlew run --args="<input-midi> <output-midi> <llm-service> <api-key> <composition-prompt>"
 ```
 
-Where `<input-file>` is the path to either a MIDI file or a serialized text file. The tool automatically detects the file type and performs the appropriate conversion:
-
-- If the input is a MIDI file, it will be converted to a serialized text format (with a `.txt` extension)
-- If the input is a serialized text file, it will be converted to a MIDI file (with a `.mid` extension)
-
-The output file will be created in the same directory as the input file, with the same base name but a different extension.
-
-#### Examples
-
-Convert a MIDI file to serialized text:
+**Complete Development Examples:**
 
 ```bash
-./gradlew run --args="path/to/input.mid"
+# Basic example - add drums to a melody
+./gradlew run --args="example.mid with-drums.mid gemini \"\" \"Add a simple rock beat\""
+
+# Add a bassline
+./gradlew run --args="melody.mid with-bass.mid gemini \"\" \"Add a walking jazz bassline\""
+
+# Create a full arrangement
+./gradlew run --args="simple.mid arranged.mid gemini \"\" \"Add drums, bass, and piano accompaniment for a pop song\""
+
+# Test with different prompts
+./gradlew run --args="input.mid output1.mid gemini \"\" \"make it swing\""
+./gradlew run --args="input.mid output2.mid gemini \"\" \"add latin percussion\""
+./gradlew run --args="input.mid output3.mid gemini \"\" \"create a countermelody\""
 ```
 
-This will create a file named `path/to/input.txt` containing the serialized representation of the MIDI file.
+**Development Tips:**
+- The Gradle run task automatically loads API keys from `apikeys.json`
+- Use `\"\"` for the API key parameter to load from file
+- Escape quotes properly when using `--args`
+- Output files are created in the project directory
+- Check console output for detailed processing steps
 
-Convert a serialized text file to MIDI:
+### Development Configuration
 
-```bash
-./gradlew run --args="path/to/serialized.txt"
+The `build.gradle` file includes a special configuration for the `run` task that automatically loads API keys from your `apikeys.json` file and sets them as environment variables. This means you don't need to manually set environment variables during development.
+
+```gradle
+// The run task automatically loads from apikeys.json
+run {
+    environment System.getenv()
+    doFirst {
+        // Loads gemini key from apikeys.json and sets GOOGLE_API_KEY
+        // Loads gpt4 key and sets OPENAI_API_KEY  
+        // Loads claude key and sets ANTHROPIC_API_KEY
+    }
+}
 ```
 
-This will create a MIDI file named `path/to/serialized.mid` based on the serialized text.
+This makes development much easier - just edit your `apikeys.json` file and run with Gradle!
 
-#### Building a Standalone JAR
+### Building for Distribution
 
-To create a standalone JAR file that can be run directly with Java:
+To create a standalone JAR file or distribution package:
 
 ```bash
+# Build a standard JAR
 ./gradlew jar
+
+# Build a distribution with all dependencies and scripts
+./gradlew installDist
+
+# Create distribution archives
+./gradlew distTar distZip
 ```
 
-Then you can run the CLI tool with:
+The installDist task creates a complete distribution in `build/install/rubberduck/` with:
+- `bin/rubberduck` - Unix shell script
+- `bin/rubberduck.bat` - Windows batch script  
+- `lib/` - All JAR dependencies
 
-```bash
-java -jar build/libs/rubberduck-1.0-SNAPSHOT.jar <input-file>
-```
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes and test with `./gradlew run --args="..."`
+4. Run tests with `./gradlew test`
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
