@@ -39,7 +39,7 @@ public class MidiPlayer {
             sequencer.addMetaEventListener(new MetaEventListener() {
                 @Override
                 public void meta(MetaMessage meta) {
-                    if (meta.getType() == 47) { // End of track
+                    if (meta.getType() == END_OF_TRACK_META_EVENT) { // End of track
                         notifyPlaybackFinished();
                     }
                 }
