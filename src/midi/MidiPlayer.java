@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * MIDI player for playing MIDI files with playback controls.
@@ -15,6 +17,8 @@ public class MidiPlayer {
     private Sequence currentSequence;
     private String currentFile;
     private List<PlaybackListener> listeners = new ArrayList<>();
+    private Timer positionUpdateTimer;
+    private TimerTask positionUpdateTask;
     
     /**
      * Interface for listening to playback events.
@@ -158,6 +162,15 @@ public class MidiPlayer {
     }
     
     /**
+     * Checks if the specified file is currently loaded.
+     */
+    public boolean isFileLoaded(String filePath) {
+        if (currentFile == null) return false;
+        File file = new File(filePath);
+        return currentFile.equals(file.getName());
+    }
+    
+    /**
      * Adds a playback listener.
      */
     public void addListener(PlaybackListener listener) {
@@ -175,30 +188,83 @@ public class MidiPlayer {
         for (PlaybackListener listener : listeners) {
             listener.onPlaybackStarted(currentFile);
         }
+        startPositionUpdates();
     }
     
     private void notifyPlaybackPaused() {
+        stopPositionUpdates();
         for (PlaybackListener listener : listeners) {
             listener.onPlaybackPaused(currentFile);
         }
     }
     
     private void notifyPlaybackStopped() {
+        stopPositionUpdates();
         for (PlaybackListener listener : listeners) {
             listener.onPlaybackStopped(currentFile);
         }
     }
     
     private void notifyPlaybackFinished() {
+        stopPositionUpdates();
         for (PlaybackListener listener : listeners) {
             listener.onPlaybackFinished(currentFile);
         }
     }
     
     /**
+     * Starts regular position updates during playback.
+     */
+    private void startPositionUpdates() {
+        stopPositionUpdates(); // Stop any existing timer
+        
+        positionUpdateTimer = new Timer(true); // Daemon thread
+        positionUpdateTask = new TimerTask() {
+            @Override
+            public void run() {
+                if (sequencer != null && sequencer.isRunning() && currentSequence != null) {
+                    long currentTick = sequencer.getTickPosition();
+                    long totalTicks = currentSequence.getTickLength();
+                    notifyPositionChanged(currentTick, totalTicks);
+                } else {
+                    // Stop updates if not playing
+                    stopPositionUpdates();
+                }
+            }
+        };
+        
+        // Update position every 100ms
+        positionUpdateTimer.schedule(positionUpdateTask, 0, 100);
+    }
+    
+    /**
+     * Stops position updates.
+     */
+    private void stopPositionUpdates() {
+        if (positionUpdateTask != null) {
+            positionUpdateTask.cancel();
+            positionUpdateTask = null;
+        }
+        if (positionUpdateTimer != null) {
+            positionUpdateTimer.cancel();
+            positionUpdateTimer = null;
+        }
+    }
+    
+    /**
+     * Notifies listeners of position changes.
+     */
+    private void notifyPositionChanged(long currentTick, long totalTicks) {
+        for (PlaybackListener listener : listeners) {
+            listener.onPositionChanged(currentFile, currentTick, totalTicks);
+        }
+    }
+
+    /**
      * Closes the sequencer and releases resources.
      */
     public void close() {
+        stopPositionUpdates();
         if (sequencer != null) {
             sequencer.close();
         }

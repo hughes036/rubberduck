@@ -56,11 +56,65 @@ fun RubberDuckDesktopApp() {
         )
     }
     
+    // Real-time position updates during playback
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(100) // Update every 100ms
+            
+            if (playbackService.isPlaying()) {
+                val currentPosition = (playbackService.getPosition() * playbackService.getDuration()).toFloat()
+                val duration = playbackService.getDuration().toFloat()
+                
+                // Update all rows that might be playing
+                val updatedRows = appState.rows.map { row ->
+                    val updatedInputFile = row.inputFile?.let { inputFile ->
+                        if (inputFile.isPlaying) {
+                            inputFile.copy(
+                                currentPosition = currentPosition,
+                                duration = if (inputFile.duration <= 0f) duration else inputFile.duration
+                            )
+                        } else inputFile
+                    }
+                    
+                    val updatedOutputFile = row.outputFile?.let { outputFile ->
+                        if (outputFile.isPlaying) {
+                            outputFile.copy(
+                                currentPosition = currentPosition,
+                                duration = if (outputFile.duration <= 0f) duration else outputFile.duration
+                            )
+                        } else outputFile
+                    }
+                    
+                    if (updatedInputFile != row.inputFile || updatedOutputFile != row.outputFile) {
+                        row.copy(
+                            inputFile = updatedInputFile,
+                            outputFile = updatedOutputFile
+                        )
+                    } else {
+                        row
+                    }
+                }
+                
+                if (updatedRows != appState.rows) {
+                    appState = appState.copy(rows = updatedRows)
+                }
+            }
+        }
+    }
+    
     RubberDuckApp(
         state = appState,
         playbackService = playbackService,
         onAddMidiFile = {
             selectMidiFile { selectedFile ->
+                // Get actual duration from the MIDI file
+                val actualDuration = try {
+                    processingService.getDurationForFile(selectedFile.absolutePath).toFloat()
+                } catch (e: Exception) {
+                    println("⚠️ Could not get duration for ${selectedFile.name}: ${e.message}")
+                    100f // Fallback duration
+                }
+                
                 val newRow = MidiRow(
                     id = UUID.randomUUID().toString(),
                     inputFile = MidiFile(
@@ -68,7 +122,7 @@ fun RubberDuckDesktopApp() {
                         name = selectedFile.name,
                         isPlaying = false,
                         currentPosition = 0f,
-                        duration = 100f // TODO: Get actual duration
+                        duration = actualDuration
                     ),
                     prompt = "",
                     selectedLlm = appState.availableServices.firstOrNull() ?: LlmService.GEMINI,
@@ -141,12 +195,20 @@ private suspend fun processRow(
         
         withContext(Dispatchers.Main) {
             if (result.isSuccess) {
+                // Get actual duration from the output MIDI file
+                val actualDuration = try {
+                    processingService.getDurationForFile(outputFile.absolutePath).toFloat()
+                } catch (e: Exception) {
+                    println("⚠️ Could not get duration for output file ${outputFile.name}: ${e.message}")
+                    120f // Fallback duration
+                }
+                
                 val outputMidiFile = MidiFile(
                     path = outputFile.absolutePath,
                     name = outputFile.name,
                     isPlaying = false,
                     currentPosition = 0f,
-                    duration = 120f // TODO: Get actual duration
+                    duration = actualDuration
                 )
                 
                 onStateUpdate(

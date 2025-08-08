@@ -235,7 +235,7 @@ fun MidiRowComponent(
                         (position / midiFile.duration).toDouble()
                     } else 0.0
                     
-                    playbackService.setPosition(positionPercent)
+                    playbackService.setPosition(midiFile.path, positionPercent)
                     
                     onRowUpdate(row.copy(
                         inputFile = midiFile.copy(currentPosition = position)
@@ -280,7 +280,7 @@ fun MidiRowComponent(
                             (position / midiFile.duration).toDouble()
                         } else 0.0
                         
-                        playbackService.setPosition(positionPercent)
+                        playbackService.setPosition(midiFile.path, positionPercent)
                         
                         onRowUpdate(row.copy(
                             outputFile = midiFile.copy(currentPosition = position)

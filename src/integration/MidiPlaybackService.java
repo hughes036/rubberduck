@@ -32,8 +32,18 @@ public class MidiPlaybackService {
      */
     public boolean playPause(String filePath) {
         try {
-            // Load the file if it's different or if nothing is loaded
-            player.loadFile(filePath);
+            boolean fileAlreadyLoaded = player.isFileLoaded(filePath);
+            System.out.println("🔍 DEBUG: playPause called for " + filePath);
+            System.out.println("  File already loaded: " + fileAlreadyLoaded);
+            
+            // Only load the file if it's different from the currently loaded file
+            if (!fileAlreadyLoaded) {
+                System.out.println("  Loading file...");
+                player.loadFile(filePath); // This will reset position for new files
+            } else {
+                System.out.println("  File already loaded, skipping loadFile to preserve position");
+            }
+            // If same file is already loaded, don't call loadFile to preserve position
             
             // Toggle play/pause
             if (player.isPlaying()) {
@@ -54,13 +64,8 @@ public class MidiPlaybackService {
      * Stops playback and resets to the beginning.
      */
     public void stop(String filePath) {
-        try {
-            player.loadFile(filePath);
-            player.stop();
-        } catch (InvalidMidiDataException | IOException e) {
-            System.err.println("❌ Error stopping MIDI file: " + e.getMessage());
-            e.printStackTrace();
-        }
+        // Just stop playback, don't reload the file
+        player.stop();
     }
     
     /**
@@ -86,8 +91,20 @@ public class MidiPlaybackService {
 
     /**
      * Sets the current playback position as a percentage (0.0 to 1.0).
+     * @param filePath The file path to seek in
+     * @param position The position to seek to (0.0 = start, 1.0 = end)
      */
-    public void setPosition(double position) {
+    public void setPosition(String filePath, double position) {
+        // Ensure file is loaded before seeking
+        if (filePath != null && !player.isFileLoaded(filePath)) {
+            System.out.println("🔍 DEBUG: setPosition called but file not loaded, loading: " + filePath);
+            try {
+                player.loadFile(filePath);
+            } catch (Exception e) {
+                System.err.println("❌ Error loading file for seek: " + e.getMessage());
+                return;
+            }
+        }
         player.setPosition(position);
     }
 }

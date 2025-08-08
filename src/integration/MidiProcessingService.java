@@ -226,7 +226,21 @@ public class MidiProcessingService {
     /**
      * Sets the current playback position as a percentage (0.0 to 1.0).
      */
-    public void setPosition(double position) {
-        MidiPlaybackService.getInstance().setPosition(position);
+    public void setPosition(String filePath, double position) {
+        MidiPlaybackService.getInstance().setPosition(filePath, position);
+    }
+    
+    /**
+     * Gets the duration of a specific MIDI file without loading it for playback.
+     */
+    public double getDurationForFile(String filePath) {
+        try {
+            // Temporarily load the file to get its duration
+            javax.sound.midi.Sequence sequence = javax.sound.midi.MidiSystem.getSequence(new java.io.File(filePath));
+            return sequence.getMicrosecondLength() / 1000000.0;
+        } catch (Exception e) {
+            System.err.println("❌ Error getting duration for file " + filePath + ": " + e.getMessage());
+            return 0.0;
+        }
     }
 }

@@ -24,8 +24,8 @@ class JvmMidiPlaybackService(private val processingService: MidiProcessingServic
         return processingService.position
     }
     
-    override fun setPosition(position: Double) {
-        processingService.setPosition(position)
+    override fun setPosition(filePath: String, position: Double) {
+        processingService.setPosition(filePath, position)
     }
     
     override fun getDuration(): Double {
