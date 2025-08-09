@@ -117,6 +117,7 @@ fun RubberDuckDesktopApp() {
                 
                 val newRow = MidiRow(
                     id = UUID.randomUUID().toString(),
+                    rowNumber = appState.nextRowNumber,
                     inputFile = MidiFile(
                         path = selectedFile.absolutePath,
                         name = selectedFile.name,
@@ -130,7 +131,10 @@ fun RubberDuckDesktopApp() {
                     outputFile = null,
                     error = null
                 )
-                appState = appState.copy(rows = appState.rows + newRow)
+                appState = appState.copy(
+                    rows = appState.rows + newRow,
+                    nextRowNumber = appState.nextRowNumber + 1
+                )
             }
         },
         onRowUpdate = { rowId, updatedRow ->
@@ -211,17 +215,34 @@ private suspend fun processRow(
                     duration = actualDuration
                 )
                 
+                // Create a new derived row instead of updating the existing one
+                val derivedRow = MidiRow(
+                    id = UUID.randomUUID().toString(),
+                    rowNumber = appState.nextRowNumber,
+                    inputFile = outputMidiFile, // The derived row's input is the LLM output
+                    prompt = "",
+                    selectedLlm = appState.availableServices.firstOrNull() ?: LlmService.GEMINI,
+                    isProcessing = false,
+                    outputFile = null,
+                    error = null,
+                    derivedFrom = RowDerivation(
+                        sourceRowNumber = row.rowNumber,
+                        prompt = row.prompt,
+                        llmService = row.selectedLlm
+                    )
+                )
+                
                 onStateUpdate(
                     appState.copy(
                         rows = appState.rows.map {
                             if (it.id == rowId) {
                                 it.copy(
                                     isProcessing = false,
-                                    outputFile = outputMidiFile,
                                     error = null
                                 )
                             } else it
-                        }
+                        } + derivedRow, // Add the new derived row
+                        nextRowNumber = appState.nextRowNumber + 1
                     )
                 )
             } else {

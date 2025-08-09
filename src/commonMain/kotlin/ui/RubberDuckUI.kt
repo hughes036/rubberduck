@@ -2,10 +2,12 @@ package ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -190,13 +192,32 @@ fun MidiRowComponent(
     onProcessRequest: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+            .border(2.dp, Color.Black, RectangleShape),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Row number header with derivation info
+            Column {
+                Text(
+                    text = "Row ${row.rowNumber}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                
+                // Derivation subtitle (if this row was derived from another)
+                row.derivedFrom?.let { derivation ->
+                    Text(
+                        text = "(Derived from Row ${derivation.sourceRowNumber} using prompt: \"${derivation.prompt}\")",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+            }
             // MIDI file section
             MidiFileSection(
                 midiFile = row.inputFile,

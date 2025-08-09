@@ -5,12 +5,14 @@ package model
  */
 data class MidiRow(
     val id: String,
+    val rowNumber: Int,
     val inputFile: MidiFile?,
     val prompt: String = "",
     val selectedLlm: LlmService = LlmService.GEMINI,
     val isProcessing: Boolean = false,
     val outputFile: MidiFile? = null,
-    val error: String? = null
+    val error: String? = null,
+    val derivedFrom: RowDerivation? = null
 )
 
 /**
@@ -22,6 +24,15 @@ data class MidiFile(
     val isPlaying: Boolean = false,
     val currentPosition: Float = 0f,
     val duration: Float = 0f
+)
+
+/**
+ * Tracks the derivation history of a MIDI row
+ */
+data class RowDerivation(
+    val sourceRowNumber: Int,
+    val prompt: String,
+    val llmService: LlmService
 )
 
 /**
@@ -38,5 +49,6 @@ enum class LlmService(val displayName: String, val serviceName: String) {
  */
 data class AppState(
     val rows: List<MidiRow> = emptyList(),
-    val availableServices: Set<LlmService> = emptySet()
+    val availableServices: Set<LlmService> = emptySet(),
+    val nextRowNumber: Int = 1
 )
