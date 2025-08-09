@@ -139,6 +139,50 @@ public class MidiPlaybackService implements MidiPlayer.PlaybackListener {
         playbackJustFinished = false;
     }
     
+    /**
+     * Plays or pauses MIDI data from serialized string (in-memory version)
+     * @param serializedMidi The serialized MIDI data string
+     * @param sessionId Unique identifier for this playback session
+     * @return true if now playing, false if paused
+     */
+    public boolean playPauseInMemory(String serializedMidi, String sessionId) {
+        try {
+            boolean sessionAlreadyLoaded = player.isSessionLoaded(sessionId);
+            System.out.println("🔍 DEBUG: playPauseInMemory called for session " + sessionId);
+            System.out.println("  Session already loaded: " + sessionAlreadyLoaded);
+            
+            // Only load the data if it's different from the currently loaded session
+            if (!sessionAlreadyLoaded) {
+                System.out.println("  Loading MIDI data from memory...");
+                player.loadFromSerializedData(serializedMidi, sessionId);
+            } else {
+                System.out.println("  Session already loaded, skipping load to preserve position");
+            }
+            
+            // Toggle play/pause
+            if (player.isPlaying()) {
+                player.pause();
+                return false; // Now paused
+            } else {
+                player.play();
+                return true; // Now playing
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error playing MIDI from memory: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Stops playback of in-memory MIDI data
+     * @param sessionId The session identifier
+     */
+    public void stopInMemory(String sessionId) {
+        // Just stop playback, session remains loaded
+        player.stop();
+    }
+    
     @Override
     public void onPlaybackFinished(String filename) {
         System.out.println("🔍 DEBUG: Playback finished: " + filename);

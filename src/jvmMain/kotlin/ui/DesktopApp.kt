@@ -319,78 +319,96 @@ private suspend fun processRow(
     }
     
     try {
-        // Create output file path
-        val outputFile = if (row.inputFile != null) {
-            val inputFile = File(row.inputFile.path)
-            File(
-                inputFile.parent,
-                "${inputFile.nameWithoutExtension}_${row.selectedLlm.name.lowercase()}_output.mid"
-            )
+        // Determine input serialized MIDI data
+        val inputSerializedMidi = if (row.inputFile != null && row.inputFile.isInMemory) {
+            // Use in-memory data
+            row.inputFile.serializedMidiData
+        } else if (row.inputFile != null) {
+            // Read from file and serialize
+            midi.MidiSerializer.serializeMidiFile(File(row.inputFile.path))
         } else {
-            // For prompt-only generation, create output in current directory
-            File("generated_${row.selectedLlm.name.lowercase()}_${System.currentTimeMillis()}.mid")
+            // No input file - will use hardcoded example
+            null
         }
         
-        // Process with LLM using the integration service
-        val result = processingService.processWithLLM(
-            row.inputFile?.path, // Can be null for prompt-only generation
+        // Process with LLM using in-memory processing
+        val result = processingService.processWithLLMInMemory(
+            inputSerializedMidi,
             row.prompt,
-            row.selectedLlm.name.lowercase(),
-            outputFile.absolutePath
+            row.selectedLlm.name.lowercase()
         )
         
         withContext(Dispatchers.Main) {
             if (result.isSuccess) {
-                // Get actual duration from the output MIDI file
-                val actualDuration = try {
-                    processingService.getDurationForFile(outputFile.absolutePath).toFloat()
-                } catch (e: Exception) {
-                    println("⚠️ Could not get duration for output file ${outputFile.name}: ${e.message}")
-                    120f // Fallback duration
+                // Result.message now contains the serialized MIDI data
+                val serializedMidiData = result.message
+                
+                // Create in-memory MIDI file
+                val inMemoryMidiFile = processingService.createInMemoryMidiFile(
+                    serializedMidiData,
+                    "generated_${row.selectedLlm.name.lowercase()}"
+                )
+                
+                if (inMemoryMidiFile != null) {
+                    // Get visualization data for the in-memory MIDI using the playback service
+                    val visualizationData = playbackService.getVisualizationDataFromMemory(serializedMidiData)
+                    
+                    val outputMidiFile = MidiFile(
+                        path = "", // Not needed for in-memory files
+                        name = inMemoryMidiFile.name,
+                        isPlaying = false,
+                        currentPosition = 0f,
+                        duration = inMemoryMidiFile.duration.toFloat(),
+                        visualizationData = visualizationData,
+                        serializedMidiData = inMemoryMidiFile.serializedData,
+                        sessionId = inMemoryMidiFile.sessionId
+                    )
+                    
+                    // Create a new derived row instead of updating the existing one
+                    val derivedRow = MidiRow(
+                        id = UUID.randomUUID().toString(),
+                        rowNumber = appState.nextRowNumber,
+                        inputFile = outputMidiFile, // The derived row's input is the LLM output
+                        prompt = "",
+                        selectedLlm = LlmService.GEMINI,
+                        isProcessing = false,
+                        outputFile = null,
+                        error = null,
+                        derivedFrom = RowDerivation(
+                            sourceRowNumber = row.rowNumber,
+                            prompt = row.prompt,
+                            llmService = row.selectedLlm
+                        )
+                    )
+                    
+                    onStateUpdate(
+                        appState.copy(
+                            rows = appState.rows.map {
+                                if (it.id == rowId) {
+                                    it.copy(
+                                        isProcessing = false,
+                                        error = null
+                                    )
+                                } else it
+                            } + derivedRow, // Add the new derived row
+                            nextRowNumber = appState.nextRowNumber + 1
+                        )
+                    )
+                } else {
+                    // Error creating in-memory MIDI file
+                    onStateUpdate(
+                        appState.copy(
+                            rows = appState.rows.map {
+                                if (it.id == rowId) {
+                                    it.copy(
+                                        isProcessing = false,
+                                        error = "Failed to create in-memory MIDI file"
+                                    )
+                                } else it
+                            }
+                        )
+                    )
                 }
-                
-                // Load visualization data for the output file
-                val visualizationData = playbackService.getVisualizationData(outputFile.absolutePath)
-                
-                val outputMidiFile = MidiFile(
-                    path = outputFile.absolutePath,
-                    name = outputFile.name,
-                    isPlaying = false,
-                    currentPosition = 0f,
-                    duration = actualDuration,
-                    visualizationData = visualizationData
-                )
-                
-                // Create a new derived row instead of updating the existing one
-                val derivedRow = MidiRow(
-                    id = UUID.randomUUID().toString(),
-                    rowNumber = appState.nextRowNumber,
-                    inputFile = outputMidiFile, // The derived row's input is the LLM output
-                    prompt = "",
-                    selectedLlm = LlmService.GEMINI,
-                    isProcessing = false,
-                    outputFile = null,
-                    error = null,
-                    derivedFrom = RowDerivation(
-                        sourceRowNumber = row.rowNumber,
-                        prompt = row.prompt,
-                        llmService = row.selectedLlm
-                    )
-                )
-                
-                onStateUpdate(
-                    appState.copy(
-                        rows = appState.rows.map {
-                            if (it.id == rowId) {
-                                it.copy(
-                                    isProcessing = false,
-                                    error = null
-                                )
-                            } else it
-                        } + derivedRow, // Add the new derived row
-                        nextRowNumber = appState.nextRowNumber + 1
-                    )
-                )
             } else {
                 onStateUpdate(
                     appState.copy(

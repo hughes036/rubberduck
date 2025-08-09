@@ -35,6 +35,92 @@ public class MidiProcessingService {
         }
     }
     
+    /**
+     * Process MIDI data in-memory without file I/O (web-ready version)
+     */
+    public ProcessingResult processWithLLMInMemory(
+        String inputSerializedMidi,
+        String prompt,
+        String llmService
+    ) {
+        try {
+            System.out.println("🔍 DEBUG: processWithLLMInMemory called");
+            System.out.println("  Input MIDI length: " + (inputSerializedMidi != null ? inputSerializedMidi.length() : "null"));
+            System.out.println("  Prompt: " + prompt);
+            System.out.println("  LLM service: " + llmService);
+            
+            // Load API keys using static method
+            System.out.println("🔍 DEBUG: Attempting to load API key for: " + llmService);
+            String apiKey = ApiKeyManager.getApiKey(llmService);
+            System.out.println("🔍 DEBUG: API key loaded: " + (apiKey != null ? "YES (length=" + apiKey.length() + ")" : "NO"));
+            
+            if (apiKey == null) {
+                String errorMsg = "API key not found for service: " + llmService;
+                System.out.println("❌ ERROR: " + errorMsg);
+                return ProcessingResult.failure(new Exception(errorMsg));
+            }
+
+            // Create LLM service based on selection
+            System.out.println("🔍 DEBUG: Creating LLM service for: " + llmService);
+            LLMService service;
+            switch (llmService.toLowerCase()) {
+                case "gemini":
+                    System.out.println("🔍 DEBUG: Creating Gemini service with API key");
+                    String originalGoogleApiKey = System.getProperty("GOOGLE_API_KEY");
+                    System.setProperty("GOOGLE_API_KEY", apiKey);
+                    try {
+                        service = LLMServiceFactory.createService("gemini", apiKey);
+                    } finally {
+                        if (originalGoogleApiKey != null) {
+                            System.setProperty("GOOGLE_API_KEY", originalGoogleApiKey);
+                        } else {
+                            System.clearProperty("GOOGLE_API_KEY");
+                        }
+                    }
+                    break;
+                case "gpt4":
+                    System.out.println("🔍 DEBUG: Creating GPT-4 service with API key");
+                    service = LLMServiceFactory.createService("gpt4", apiKey);
+                    break;
+                case "claude":
+                    System.out.println("🔍 DEBUG: Creating Claude service with API key");
+                    service = LLMServiceFactory.createService("claude", apiKey);
+                    break;
+                default:
+                    String errorMsg = "Unsupported LLM service: " + llmService;
+                    System.out.println("❌ ERROR: " + errorMsg);
+                    return ProcessingResult.failure(new Exception(errorMsg));
+            }
+
+            // Use provided serialized MIDI or hardcoded example
+            String serializedMidi = (inputSerializedMidi != null) ? inputSerializedMidi : getHardcodedMidiExample();
+            System.out.println("🔍 DEBUG: Using MIDI data, length: " + serializedMidi.length() + " characters");
+            
+            // Create full prompt with serialized MIDI data
+            String fullPrompt = buildPrompt(serializedMidi, prompt);
+            System.out.println("🔍 DEBUG: Full prompt created, length: " + fullPrompt.length() + " characters");
+            
+            // Get LLM response (this returns modified MIDI data)
+            System.out.println("🔍 DEBUG: Sending request to LLM service...");
+            String llmResponse = service.processCompositionRequest(fullPrompt);
+            System.out.println("🔍 DEBUG: LLM response received, length: " + llmResponse.length() + " characters");
+            
+            // Extract serialized MIDI data from LLM response
+            System.out.println("🔍 DEBUG: Extracting serialized MIDI data from LLM response...");
+            String extractedMidi = PromptBuilder.extractSerializedMidi(llmResponse);
+            System.out.println("🔍 DEBUG: Extracted MIDI data, length: " + extractedMidi.length() + " characters");
+            
+            String successMsg = "Successfully processed MIDI data in memory. Result length: " + extractedMidi.length() + " characters";
+            System.out.println("✅ SUCCESS: " + successMsg);
+            return ProcessingResult.success(extractedMidi); // Return the serialized MIDI data instead of file path
+        } catch (Exception e) {
+            String errorMsg = "Error processing MIDI: " + e.getMessage();
+            System.out.println("❌ ERROR: " + errorMsg);
+            e.printStackTrace();
+            return ProcessingResult.failure(e);
+        }
+    }
+
     public ProcessingResult processWithLLM(
         String inputFilePath,
         String prompt,
@@ -171,6 +257,24 @@ public class MidiProcessingService {
     }
     
     /**
+     * Plays or pauses MIDI data from serialized string (in-memory version)
+     * @param serializedMidi The serialized MIDI data string
+     * @param sessionId Unique identifier for this playback session
+     * @return true if now playing, false if paused
+     */
+    public boolean playPauseInMemory(String serializedMidi, String sessionId) {
+        return MidiPlaybackService.getInstance().playPauseInMemory(serializedMidi, sessionId);
+    }
+    
+    /**
+     * Stops playback of in-memory MIDI data
+     * @param sessionId The session identifier
+     */
+    public void stopInMemory(String sessionId) {
+        MidiPlaybackService.getInstance().stopInMemory(sessionId);
+    }
+
+    /**
      * Plays or pauses the specified MIDI file.
      * @param filePath The path to the MIDI file
      * @return true if now playing, false if paused
@@ -229,6 +333,69 @@ public class MidiProcessingService {
         }
     }
     
+    /**
+     * Creates an in-memory MidiFile from serialized MIDI data
+     */
+    public static class MidiFileFromMemory {
+        public final String name;
+        public final String sessionId;
+        public final String serializedData;
+        public final double duration;
+        
+        public MidiFileFromMemory(String name, String sessionId, String serializedData, double duration) {
+            this.name = name;
+            this.sessionId = sessionId;
+            this.serializedData = serializedData;
+            this.duration = duration;
+        }
+    }
+    
+    /**
+     * Creates a MidiFile object for in-memory MIDI data
+     */
+    public MidiFileFromMemory createInMemoryMidiFile(String serializedMidi, String baseName) {
+        try {
+            // Generate unique session ID
+            String sessionId = "session_" + System.currentTimeMillis();
+            String name = baseName + "_" + sessionId;
+            
+            // Get duration by temporarily creating a Sequence
+            javax.sound.midi.Sequence sequence = midi.MidiDeserializer.deserializeToSequence(serializedMidi);
+            double duration = sequence.getMicrosecondLength() / 1000000.0;
+            
+            return new MidiFileFromMemory(name, sessionId, serializedMidi, duration);
+        } catch (Exception e) {
+            System.err.println("Error creating in-memory MIDI file: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Gets visualization data for serialized MIDI data
+     */
+    public MidiVisualizationService.MidiVisualizationData getVisualizationDataFromMemory(String serializedMidi) {
+        try {
+            // Create a temporary file to pass to the visualization service
+            // Note: This is a temporary workaround until we enhance MidiVisualizationService for in-memory data
+            java.io.File tempFile = java.io.File.createTempFile("temp_midi_viz", ".mid");
+            tempFile.deleteOnExit();
+            
+            // Deserialize to file temporarily
+            midi.MidiDeserializer.deserializeToMidiFile(serializedMidi, tempFile);
+            
+            // Get visualization data
+            MidiVisualizationService.MidiVisualizationData data = MidiVisualizationService.extractVisualizationData(tempFile.getAbsolutePath());
+            
+            // Clean up temp file
+            tempFile.delete();
+            
+            return data;
+        } catch (Exception e) {
+            System.err.println("Error getting visualization data from memory: " + e.getMessage());
+            return null;
+        }
+    }
+
     /**
      * Returns a hardcoded MIDI example for prompt-only generation.
      * This provides a simple 4/4 kick and snare pattern that LLMs can learn from.

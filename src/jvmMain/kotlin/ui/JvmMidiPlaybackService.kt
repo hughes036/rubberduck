@@ -14,8 +14,16 @@ class JvmMidiPlaybackService(private val processingService: MidiProcessingServic
         return processingService.playPause(filePath)
     }
     
+    override fun playPauseInMemory(serializedMidi: String, sessionId: String): Boolean {
+        return processingService.playPauseInMemory(serializedMidi, sessionId)
+    }
+    
     override fun stop(filePath: String) {
         processingService.stop(filePath)
+    }
+    
+    override fun stopInMemory(sessionId: String) {
+        processingService.stopInMemory(sessionId)
     }
     
     override fun isPlaying(): Boolean {
@@ -41,7 +49,31 @@ class JvmMidiPlaybackService(private val processingService: MidiProcessingServic
     override fun getVisualizationData(filePath: String): MidiVisualizationData? {
         return try {
             val javaData = processingService.getVisualizationData(filePath)
-            
+            convertJavaVisualizationData(javaData)
+        } catch (e: Exception) {
+            println("Error getting visualization data: ${e.message}")
+            null
+        }
+    }
+    
+    /**
+     * Get visualization data for in-memory MIDI
+     */
+    fun getVisualizationDataFromMemory(serializedMidi: String): MidiVisualizationData? {
+        return try {
+            val javaData = processingService.getVisualizationDataFromMemory(serializedMidi)
+            convertJavaVisualizationData(javaData)
+        } catch (e: Exception) {
+            println("Error getting visualization data from memory: ${e.message}")
+            null
+        }
+    }
+    
+    /**
+     * Convert Java MidiVisualizationData to Kotlin model
+     */
+    private fun convertJavaVisualizationData(javaData: integration.MidiVisualizationService.MidiVisualizationData?): MidiVisualizationData? {
+        return if (javaData != null) {
             // Convert Java objects to Kotlin objects
             val noteEvents = javaData.noteEvents.map { javaEvent ->
                 NoteEvent(
@@ -59,8 +91,7 @@ class JvmMidiPlaybackService(private val processingService: MidiProcessingServic
                 minNote = javaData.minNote,
                 maxNote = javaData.maxNote
             )
-        } catch (e: Exception) {
-            println("Error getting visualization data: ${e.message}")
+        } else {
             null
         }
     }

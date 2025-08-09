@@ -522,10 +522,11 @@ fun MidiRowComponent(
                 onPlayPause = { midiFile ->
                     println("🔍 DEBUG: Play/Pause clicked for input file")
                     println("  Current isPlaying: ${midiFile.isPlaying}")
+                    println("  Is in-memory: ${midiFile.isInMemory}")
                     println("  Will toggle to: ${!midiFile.isPlaying}")
                     
-                    // Actually call the playback service
-                    val nowPlaying = playbackService.playPause(midiFile.path)
+                    // Use smart playback method that handles both file and in-memory
+                    val nowPlaying = playbackService.playPauseFile(midiFile)
                     
                     onRowUpdate(row.copy(
                         inputFile = midiFile.copy(isPlaying = nowPlaying)
@@ -534,9 +535,10 @@ fun MidiRowComponent(
                 onStop = { midiFile ->
                     println("🔍 DEBUG: Stop clicked for input file")
                     println("  Current isPlaying: ${midiFile.isPlaying}")
+                    println("  Is in-memory: ${midiFile.isInMemory}")
                     
-                    // Actually call the playback service
-                    playbackService.stop(midiFile.path)
+                    // Use smart stop method that handles both file and in-memory
+                    playbackService.stopFile(midiFile)
                     
                     onRowUpdate(row.copy(
                         inputFile = midiFile.copy(
@@ -569,9 +571,10 @@ fun MidiRowComponent(
                     onPlayPause = { midiFile ->
                         println("🔍 DEBUG: Play/Pause clicked for output file")
                         println("  Current isPlaying: ${midiFile.isPlaying}")
+                        println("  Is in-memory: ${midiFile.isInMemory}")
                         
-                        // Actually call the playback service
-                        val nowPlaying = playbackService.playPause(midiFile.path)
+                        // Use smart playback method that handles both file and in-memory
+                        val nowPlaying = playbackService.playPauseFile(midiFile)
                         
                         onRowUpdate(row.copy(
                             outputFile = midiFile.copy(isPlaying = nowPlaying)
@@ -579,9 +582,10 @@ fun MidiRowComponent(
                     },
                     onStop = { midiFile ->
                         println("🔍 DEBUG: Stop clicked for output file")
+                        println("  Is in-memory: ${midiFile.isInMemory}")
                         
-                        // Actually call the playback service
-                        playbackService.stop(midiFile.path)
+                        // Use smart stop method that handles both file and in-memory
+                        playbackService.stopFile(midiFile)
                         
                         onRowUpdate(row.copy(
                             outputFile = midiFile.copy(

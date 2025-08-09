@@ -84,6 +84,21 @@ public class MidiPlayer {
     }
     
     /**
+     * Loads MIDI data from serialized string (in-memory version)
+     */
+    public void loadFromSerializedData(String serializedMidi, String sessionId) throws Exception {
+        // Use MidiDeserializer to convert serialized data to Sequence
+        currentSequence = midi.MidiDeserializer.deserializeToSequence(serializedMidi);
+        currentFile = sessionId; // Use session ID as filename identifier
+        sequencer.setSequence(currentSequence);
+        sequencer.setTickPosition(0);
+        
+        System.out.println("🎵 Loaded MIDI from memory: " + sessionId);
+        System.out.println("   Duration: " + (currentSequence.getMicrosecondLength() / 1000000.0) + " seconds");
+        System.out.println("   Tracks: " + currentSequence.getTracks().length);
+    }
+    
+    /**
      * Starts playback of the loaded MIDI file.
      */
     public void play() {
@@ -168,6 +183,14 @@ public class MidiPlayer {
         if (currentFile == null) return false;
         File file = new File(filePath);
         return currentFile.equals(file.getName());
+    }
+    
+    /**
+     * Checks if the specified session is currently loaded (for in-memory data).
+     */
+    public boolean isSessionLoaded(String sessionId) {
+        if (currentFile == null) return false;
+        return currentFile.equals(sessionId);
     }
     
     /**
