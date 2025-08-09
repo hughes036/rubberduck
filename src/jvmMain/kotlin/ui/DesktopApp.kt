@@ -294,6 +294,9 @@ fun RubberDuckDesktopApp() {
         onHideApiKeyConfig = {
             appState = appState.copy(showApiKeyConfig = false)
             refreshAvailableServices()
+        },
+        onExportMidiFile = { midiFile ->
+            exportMidiFileToDestination(midiFile, processingService)
         }
     )
 }
@@ -448,5 +451,60 @@ private fun selectMidiFile(onFileSelected: (File) -> Unit) {
     
     if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
         onFileSelected(fileChooser.selectedFile)
+    }
+}
+
+/**
+ * Opens a file picker dialog and exports the MIDI file to the selected destination
+ */
+private fun exportMidiFileToDestination(midiFile: MidiFile, processingService: MidiProcessingService) {
+    try {
+        val fileChooser = JFileChooser().apply {
+            dialogTitle = "Export MIDI File"
+            currentDirectory = File(System.getProperty("user.home"))
+            
+            // Set suggested filename
+            val suggestedName = if (midiFile.name.endsWith(".mid") || midiFile.name.endsWith(".midi")) {
+                midiFile.name
+            } else {
+                "${midiFile.name}.mid"
+            }
+            selectedFile = File(currentDirectory, suggestedName)
+            
+            // Set file filter for MIDI files
+            fileFilter = FileNameExtensionFilter("MIDI Files (*.mid, *.midi)", "mid", "midi")
+        }
+        
+        val result = fileChooser.showSaveDialog(null)
+        
+        if (result == JFileChooser.APPROVE_OPTION) {
+            val destinationFile = fileChooser.selectedFile
+            
+            // Ensure .mid extension
+            val finalFile = if (!destinationFile.name.endsWith(".mid") && !destinationFile.name.endsWith(".midi")) {
+                File(destinationFile.parentFile, "${destinationFile.nameWithoutExtension}.mid")
+            } else {
+                destinationFile
+            }
+            
+            // Export the MIDI file
+            if (midiFile.isInMemory && midiFile.serializedMidiData != null) {
+                // Export from in-memory data
+                println("🔍 DEBUG: Exporting in-memory MIDI to: ${finalFile.absolutePath}")
+                midi.MidiDeserializer.deserializeToMidiFile(midiFile.serializedMidiData, finalFile)
+                println("✅ SUCCESS: MIDI file exported to ${finalFile.absolutePath}")
+            } else {
+                // Copy existing file to destination
+                println("🔍 DEBUG: Copying MIDI file from: ${midiFile.path} to: ${finalFile.absolutePath}")
+                File(midiFile.path).copyTo(finalFile, overwrite = true)
+                println("✅ SUCCESS: MIDI file copied to ${finalFile.absolutePath}")
+            }
+            
+        } else {
+            println("🔍 DEBUG: Export cancelled by user")
+        }
+    } catch (e: Exception) {
+        println("❌ ERROR: Failed to export MIDI file: ${e.message}")
+        e.printStackTrace()
     }
 }

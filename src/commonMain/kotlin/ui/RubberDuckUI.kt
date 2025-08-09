@@ -17,10 +17,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import model.*
 import kotlin.math.floor
@@ -362,7 +360,8 @@ fun RubberDuckApp(
     onDeleteRow: (String) -> Unit,
     onClearAll: () -> Unit,
     onShowApiKeyConfig: () -> Unit,
-    onHideApiKeyConfig: () -> Unit
+    onHideApiKeyConfig: () -> Unit,
+    onExportMidiFile: (MidiFile) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -405,7 +404,8 @@ fun RubberDuckApp(
                     playbackService = playbackService,
                     onRowUpdate = { updatedRow -> onRowUpdate(row.id, updatedRow) },
                     onProcessRequest = { onProcessRequest(row.id) },
-                    onDeleteRow = { onDeleteRow(row.id) }
+                    onDeleteRow = { onDeleteRow(row.id) },
+                    onExportMidiFile = onExportMidiFile
                 )
             }
         }
@@ -469,7 +469,8 @@ fun MidiRowComponent(
     playbackService: model.MidiPlaybackService,
     onRowUpdate: (MidiRow) -> Unit,
     onProcessRequest: () -> Unit,
-    onDeleteRow: () -> Unit
+    onDeleteRow: () -> Unit,
+    onExportMidiFile: (MidiFile) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -560,6 +561,9 @@ fun MidiRowComponent(
                     onRowUpdate(row.copy(
                         inputFile = midiFile.copy(currentPosition = position)
                     ))
+                },
+                onExportToFile = { midiFile ->
+                    onExportMidiFile(midiFile)
                 }
             )
             
@@ -607,6 +611,9 @@ fun MidiRowComponent(
                         onRowUpdate(row.copy(
                             outputFile = midiFile.copy(currentPosition = position)
                         ))
+                    },
+                    onExportToFile = { midiFile ->
+                        onExportMidiFile(midiFile)
                     }
                 )
             }
@@ -687,7 +694,8 @@ fun MidiFileSection(
     label: String,
     onPlayPause: ((MidiFile) -> Unit)? = null,
     onStop: ((MidiFile) -> Unit)? = null,
-    onSeek: ((MidiFile, Float) -> Unit)? = null
+    onSeek: ((MidiFile, Float) -> Unit)? = null,
+    onExportToFile: ((MidiFile) -> Unit)? = null
 ) {
     Column {
         Text(
@@ -719,10 +727,9 @@ fun MidiFileSection(
                             modifier = Modifier.weight(1f, fill = false)
                         )
                         
-                        val clipboardManager = LocalClipboardManager.current
                         Button(
                             onClick = { 
-                                clipboardManager.setText(AnnotatedString(midiFile.path))
+                                onExportToFile?.invoke(midiFile)
                             },
                             modifier = Modifier.height(32.dp),
                             colors = ButtonDefaults.buttonColors(
@@ -732,7 +739,7 @@ fun MidiFileSection(
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "📋 Copy",
+                                text = "� Export",
                                 style = MaterialTheme.typography.labelSmall
                             )
                         }
