@@ -61,6 +61,9 @@ fun RubberDuckDesktopApp() {
         while (true) {
             delay(100) // Update every 100ms
             
+            // Check if playback just finished
+            val playbackJustFinished = playbackService.hasPlaybackJustFinished()
+            
             if (playbackService.isPlaying()) {
                 val currentPosition = (playbackService.getPosition() * playbackService.getDuration()).toFloat()
                 val duration = playbackService.getDuration().toFloat()
@@ -81,6 +84,40 @@ fun RubberDuckDesktopApp() {
                             outputFile.copy(
                                 currentPosition = currentPosition,
                                 duration = if (outputFile.duration <= 0f) duration else outputFile.duration
+                            )
+                        } else outputFile
+                    }
+                    
+                    if (updatedInputFile != row.inputFile || updatedOutputFile != row.outputFile) {
+                        row.copy(
+                            inputFile = updatedInputFile,
+                            outputFile = updatedOutputFile
+                        )
+                    } else {
+                        row
+                    }
+                }
+                
+                if (updatedRows != appState.rows) {
+                    appState = appState.copy(rows = updatedRows)
+                }
+            } else if (playbackJustFinished) {
+                // Playback just finished - reset all playing files to beginning and stopped state
+                val updatedRows = appState.rows.map { row ->
+                    val updatedInputFile = row.inputFile?.let { inputFile ->
+                        if (inputFile.isPlaying) {
+                            inputFile.copy(
+                                isPlaying = false,
+                                currentPosition = 0f
+                            )
+                        } else inputFile
+                    }
+                    
+                    val updatedOutputFile = row.outputFile?.let { outputFile ->
+                        if (outputFile.isPlaying) {
+                            outputFile.copy(
+                                isPlaying = false,
+                                currentPosition = 0f
                             )
                         } else outputFile
                     }

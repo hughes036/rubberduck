@@ -7,12 +7,14 @@ import java.io.IOException;
 /**
  * Service for managing MIDI playback with UI integration.
  */
-public class MidiPlaybackService {
+public class MidiPlaybackService implements MidiPlayer.PlaybackListener {
     private static MidiPlaybackService instance;
     private MidiPlayer player;
+    private boolean playbackJustFinished = false;
     
     private MidiPlaybackService() {
         player = MidiPlayer.getInstance();
+        player.addListener(this); // Listen to playback events
     }
     
     /**
@@ -106,5 +108,46 @@ public class MidiPlaybackService {
             }
         }
         player.setPosition(position);
+    }
+    
+    /**
+     * Checks if playback just finished (for UI state management).
+     * This flag is automatically reset when checked.
+     */
+    public boolean hasPlaybackJustFinished() {
+        boolean result = playbackJustFinished;
+        playbackJustFinished = false; // Reset the flag
+        return result;
+    }
+    
+    // PlaybackListener interface implementations
+    @Override
+    public void onPlaybackStarted(String filename) {
+        System.out.println("🔍 DEBUG: Playback started: " + filename);
+        playbackJustFinished = false;
+    }
+    
+    @Override
+    public void onPlaybackPaused(String filename) {
+        System.out.println("🔍 DEBUG: Playback paused: " + filename);
+        playbackJustFinished = false;
+    }
+    
+    @Override
+    public void onPlaybackStopped(String filename) {
+        System.out.println("🔍 DEBUG: Playback stopped: " + filename);
+        playbackJustFinished = false;
+    }
+    
+    @Override
+    public void onPlaybackFinished(String filename) {
+        System.out.println("🔍 DEBUG: Playback finished: " + filename);
+        playbackJustFinished = true; // Set flag for UI to detect
+    }
+    
+    @Override
+    public void onPositionChanged(String filename, long position, long length) {
+        // This is handled by the polling mechanism in the UI
+        // We don't need to do anything special here
     }
 }

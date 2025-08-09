@@ -31,4 +31,8 @@ class JvmMidiPlaybackService(private val processingService: MidiProcessingServic
     override fun getDuration(): Double {
         return processingService.duration
     }
+    
+    override fun hasPlaybackJustFinished(): Boolean {
+        return integration.MidiPlaybackService.getInstance().hasPlaybackJustFinished()
+    }
 }

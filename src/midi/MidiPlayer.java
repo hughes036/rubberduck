@@ -207,6 +207,10 @@ public class MidiPlayer {
     
     private void notifyPlaybackFinished() {
         stopPositionUpdates();
+        // Reset position to beginning when playback finishes
+        if (sequencer != null) {
+            sequencer.setTickPosition(0);
+        }
         for (PlaybackListener listener : listeners) {
             listener.onPlaybackFinished(currentFile);
         }

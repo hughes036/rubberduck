@@ -38,4 +38,10 @@ interface MidiPlaybackService {
      * Gets the duration of the current file in seconds.
      */
     fun getDuration(): Double
+    
+    /**
+     * Checks if playback just finished (for UI state management).
+     * This flag is automatically reset when checked.
+     */
+    fun hasPlaybackJustFinished(): Boolean
 }
