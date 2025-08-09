@@ -137,6 +137,22 @@ fun RubberDuckDesktopApp() {
                 )
             }
         },
+        onAddPromptOnlyRow = {
+            val newRow = MidiRow(
+                id = UUID.randomUUID().toString(),
+                rowNumber = appState.nextRowNumber,
+                inputFile = null, // No input file for prompt-only generation
+                prompt = "",
+                selectedLlm = appState.availableServices.firstOrNull() ?: LlmService.GEMINI,
+                isProcessing = false,
+                outputFile = null,
+                error = null
+            )
+            appState = appState.copy(
+                rows = appState.rows + newRow,
+                nextRowNumber = appState.nextRowNumber + 1
+            )
+        },
         onRowUpdate = { rowId, updatedRow ->
             println("🔍 DEBUG: Row update triggered for row $rowId")
             println("  Updated row: $updatedRow")
@@ -183,15 +199,20 @@ private suspend fun processRow(
     
     try {
         // Create output file path
-        val inputFile = File(row.inputFile!!.path)
-        val outputFile = File(
-            inputFile.parent,
-            "${inputFile.nameWithoutExtension}_${row.selectedLlm.name.lowercase()}_output.mid"
-        )
+        val outputFile = if (row.inputFile != null) {
+            val inputFile = File(row.inputFile.path)
+            File(
+                inputFile.parent,
+                "${inputFile.nameWithoutExtension}_${row.selectedLlm.name.lowercase()}_output.mid"
+            )
+        } else {
+            // For prompt-only generation, create output in current directory
+            File("generated_${row.selectedLlm.name.lowercase()}_${System.currentTimeMillis()}.mid")
+        }
         
         // Process with LLM using the integration service
         val result = processingService.processWithLLM(
-            row.inputFile.path,
+            row.inputFile?.path, // Can be null for prompt-only generation
             row.prompt,
             row.selectedLlm.name.lowercase(),
             outputFile.absolutePath

@@ -142,6 +142,7 @@ fun RubberDuckApp(
     state: AppState,
     playbackService: model.MidiPlaybackService,
     onAddMidiFile: () -> Unit,
+    onAddPromptOnlyRow: () -> Unit,
     onRowUpdate: (String, MidiRow) -> Unit,
     onProcessRequest: (String) -> Unit
 ) {
@@ -171,14 +172,26 @@ fun RubberDuckApp(
                     onProcessRequest = { onProcessRequest(row.id) }
         )
     }
-}        // Add MIDI file button
-        Button(
-            onClick = onAddMidiFile,
+}        // Add buttons
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp)
+                .padding(top = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("➕ Add Input MIDI File")
+            Button(
+                onClick = onAddMidiFile,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("➕ Add MIDI File")
+            }
+            
+            Button(
+                onClick = onAddPromptOnlyRow,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("✨ Generate from Prompt")
+            }
         }
     }
 }
@@ -317,7 +330,13 @@ fun MidiRowComponent(
                     onRowUpdate(row.copy(prompt = newPrompt))
                 },
                 label = { Text("LLM Prompt") },
-                placeholder = { Text("e.g., Add a walking bassline") },
+                placeholder = { 
+                    if (row.inputFile != null) {
+                        Text("e.g., Add a walking bassline")
+                    } else {
+                        Text("e.g., Create a funk shuffle with syncopated kick and snare for 8 bars")
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !row.isProcessing
             )
@@ -346,7 +365,6 @@ fun MidiRowComponent(
                 Button(
                     onClick = onProcessRequest,
                     enabled = !row.isProcessing && 
-                            row.inputFile != null && 
                             row.prompt.isNotBlank(),
                     modifier = Modifier.weight(1f)
                 ) {
@@ -492,7 +510,7 @@ fun MidiFileSection(
             }
         } else {
             Text(
-                text = "No file selected",
+                text = if (label == "Input MIDI") "Generate from prompt only" else "No file selected",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

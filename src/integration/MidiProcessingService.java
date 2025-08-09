@@ -58,7 +58,7 @@ public class MidiProcessingService {
                 System.out.println("❌ ERROR: " + errorMsg);
                 return ProcessingResult.failure(new Exception(errorMsg));
             }
-            
+
             // Create LLM service based on selection
             System.out.println("🔍 DEBUG: Creating LLM service for: " + llmService);
             LLMService service;
@@ -93,23 +93,30 @@ public class MidiProcessingService {
                     System.out.println("❌ ERROR: " + errorMsg);
                     return ProcessingResult.failure(new Exception(errorMsg));
             }
-            
-            // Process MIDI file
-            File inputFile = new File(inputFilePath);
-            System.out.println("🔍 DEBUG: Checking input file: " + inputFile.getAbsolutePath());
-            if (!inputFile.exists()) {
-                String errorMsg = "Input file does not exist: " + inputFilePath;
-                System.out.println("❌ ERROR: " + errorMsg);
-                return ProcessingResult.failure(new Exception(errorMsg));
-            }
-            System.out.println("🔍 DEBUG: Input file exists, proceeding with serialization");
-            
-            // Serialize MIDI to text (note: this reads and serializes the file)
-            System.out.println("🔍 DEBUG: Serializing MIDI file...");
-            String serializedMidi = MidiSerializer.serializeMidiFile(inputFile);
-            System.out.println("🔍 DEBUG: MIDI serialized, length: " + serializedMidi.length() + " characters");
-            
-            // Create full prompt with serialized MIDI data
+
+            // Get serialized MIDI data - either from input file or example
+            String serializedMidi;
+            if (inputFilePath != null) {
+                // Process MIDI file
+                File inputFile = new File(inputFilePath);
+                System.out.println("🔍 DEBUG: Checking input file: " + inputFile.getAbsolutePath());
+                if (!inputFile.exists()) {
+                    String errorMsg = "Input file does not exist: " + inputFilePath;
+                    System.out.println("❌ ERROR: " + errorMsg);
+                    return ProcessingResult.failure(new Exception(errorMsg));
+                }
+                System.out.println("🔍 DEBUG: Input file exists, proceeding with serialization");
+                
+                // Serialize MIDI to text (note: this reads and serializes the file)
+                System.out.println("🔍 DEBUG: Serializing MIDI file...");
+                serializedMidi = MidiSerializer.serializeMidiFile(inputFile);
+                System.out.println("🔍 DEBUG: MIDI serialized, length: " + serializedMidi.length() + " characters");
+            } else {
+                // Use hardcoded example for prompt-only generation
+                System.out.println("🔍 DEBUG: No input file provided, using hardcoded MIDI example");
+                serializedMidi = getHardcodedMidiExample();
+                System.out.println("🔍 DEBUG: Using hardcoded MIDI example, length: " + serializedMidi.length() + " characters");
+            }            // Create full prompt with serialized MIDI data
             String fullPrompt = buildPrompt(serializedMidi, prompt);
             System.out.println("🔍 DEBUG: Full prompt created, length: " + fullPrompt.length() + " characters");
             
@@ -242,5 +249,34 @@ public class MidiProcessingService {
             System.err.println("❌ Error getting duration for file " + filePath + ": " + e.getMessage());
             return 0.0;
         }
+    }
+    
+    /**
+     * Returns a hardcoded MIDI example for prompt-only generation.
+     * This provides a simple 4/4 kick and snare pattern that LLMs can learn from.
+     */
+    private String getHardcodedMidiExample() {
+        return "MIDI_HEADER|divisionType=0.0|resolution=480\n" +
+               "TRACKS|count=1\n" +
+               "TRACK|number=0|events=19\n" +
+               "EVENT|tick=0|type=MetaMessage|metaType=3|description=TRACK_NAME|name=Drums\n" +
+               "EVENT|tick=0|type=ShortMessage|command=192|channel=9|data1=0|data2=0|description=PROGRAM_CHANGE|program=0\n" +
+               "EVENT|tick=0|type=ShortMessage|command=144|channel=9|data1=36|data2=100|description=NOTE_ON|note=36|velocity=100\n" +
+               "EVENT|tick=480|type=ShortMessage|command=128|channel=9|data1=36|data2=0|description=NOTE_OFF|note=36|velocity=0\n" +
+               "EVENT|tick=480|type=ShortMessage|command=144|channel=9|data1=38|data2=90|description=NOTE_ON|note=38|velocity=90\n" +
+               "EVENT|tick=960|type=ShortMessage|command=128|channel=9|data1=38|data2=0|description=NOTE_OFF|note=38|velocity=0\n" +
+               "EVENT|tick=960|type=ShortMessage|command=144|channel=9|data1=36|data2=100|description=NOTE_ON|note=36|velocity=100\n" +
+               "EVENT|tick=1440|type=ShortMessage|command=128|channel=9|data1=36|data2=0|description=NOTE_OFF|note=36|velocity=0\n" +
+               "EVENT|tick=1440|type=ShortMessage|command=144|channel=9|data1=38|data2=90|description=NOTE_ON|note=38|velocity=90\n" +
+               "EVENT|tick=1920|type=ShortMessage|command=128|channel=9|data1=38|data2=0|description=NOTE_OFF|note=38|velocity=0\n" +
+               "EVENT|tick=1920|type=ShortMessage|command=144|channel=9|data1=36|data2=100|description=NOTE_ON|note=36|velocity=100\n" +
+               "EVENT|tick=2400|type=ShortMessage|command=128|channel=9|data1=36|data2=0|description=NOTE_OFF|note=36|velocity=0\n" +
+               "EVENT|tick=2400|type=ShortMessage|command=144|channel=9|data1=38|data2=90|description=NOTE_ON|note=38|velocity=90\n" +
+               "EVENT|tick=2880|type=ShortMessage|command=128|channel=9|data1=38|data2=0|description=NOTE_OFF|note=38|velocity=0\n" +
+               "EVENT|tick=2880|type=ShortMessage|command=144|channel=9|data1=36|data2=100|description=NOTE_ON|note=36|velocity=100\n" +
+               "EVENT|tick=3360|type=ShortMessage|command=128|channel=9|data1=36|data2=0|description=NOTE_OFF|note=36|velocity=0\n" +
+               "EVENT|tick=3360|type=ShortMessage|command=144|channel=9|data1=38|data2=90|description=NOTE_ON|note=38|velocity=90\n" +
+               "EVENT|tick=3840|type=ShortMessage|command=128|channel=9|data1=38|data2=0|description=NOTE_OFF|note=38|velocity=0\n" +
+               "EVENT|tick=3840|type=MetaMessage|metaType=47|description=END_OF_TRACK\n";
     }
 }
