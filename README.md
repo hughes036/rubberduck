@@ -1,4 +1,4 @@
-# Rubberduck Project
+# Scriabin Project
 
 An LLM-powered MIDI composition tool that uses artificial intelligence to enhance and modify MIDI files based on natural language prompts. Features both a command-line interface and a modern graphical user interface built with Kotlin Multiplatform Compose.
 
@@ -17,25 +17,25 @@ An LLM-powered MIDI composition tool that uses artificial intelligence to enhanc
 
 ### �️ For Users (GUI Application)
 ```bash
-git clone https://github.com/your-username/rubberduck.git
-cd rubberduck
+git clone https://github.com/your-username/scriabin.git
+cd scriabin
 # Set up your API key in apikeys.json (copy from apikeys.json.example)
 ./gradlew run  # Launches the GUI application
 ```
 
 ### �🚀 For Users (Install CLI)
 ```bash
-git clone https://github.com/your-username/rubberduck.git
-cd rubberduck
+git clone https://github.com/your-username/scriabin.git
+cd scriabin
 ./gradlew installDist
-export PATH="$PATH:$(pwd)/build/install/rubberduck/bin"
-rubberduck input.mid output.mid gemini "" "Add a walking bassline"
+export PATH="$PATH:$(pwd)/build/install/scriabin/bin"
+scriabin input.mid output.mid gemini "" "Add a walking bassline"
 ```
 
 ### 🔧 For Developers (Use Gradle)
 ```bash
-git clone https://github.com/your-username/rubberduck.git
-cd rubberduck
+git clone https://github.com/your-username/scriabin.git
+cd scriabin
 # Set up your API key in apikeys.json
 ./gradlew runCLI --args="example.mid output.mid gemini \"\" \"Add drums\""
 ```
@@ -45,8 +45,8 @@ cd rubberduck
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/your-username/rubberduck.git
-    cd rubberduck
+    git clone https://github.com/your-username/scriabin.git
+    cd scriabin
     ```
 
 2.  **Build the project and install the CLI:**
@@ -55,7 +55,7 @@ cd rubberduck
     ./gradlew installDist
     ```
 
-    This will create a runnable version of the application in `build/install/rubberduck`.
+    This will create a runnable version of the application in `build/install/scriabin`.
 
 3.  **Add the CLI to your PATH:**
 
@@ -64,14 +64,14 @@ cd rubberduck
     *   For Bash (usually on Linux and macOS):
 
         ```bash
-        echo 'export PATH="$PATH:'$(pwd)'/build/install/rubberduck/bin"' >> ~/.bashrc
+        echo 'export PATH="$PATH:'$(pwd)'/build/install/scriabin/bin"' >> ~/.bashrc
         source ~/.bashrc
         ```
 
     *   For Zsh (default on newer macOS):
 
         ```bash
-        echo 'export PATH="$PATH:'$(pwd)'/build/install/rubberduck/bin"' >> ~/.zshrc
+        echo 'export PATH="$PATH:'$(pwd)'/build/install/scriabin/bin"' >> ~/.zshrc
         source ~/.zshrc
         ```
 
@@ -111,10 +111,10 @@ The desktop GUI provides an intuitive interface for MIDI composition with LLMs:
 
 ### Command Line Interface
 
-Once installed, you can use the `rubberduck` command from anywhere in your terminal.
+Once installed, you can use the `scriabin` command from anywhere in your terminal.
 
 ```bash
-rubberduck <input-midi> <output-midi> <llm-service> <api-key> <composition-prompt>
+scriabin <input-midi> <output-midi> <llm-service> <api-key> <composition-prompt>
 ```
 
 **Arguments:**
@@ -129,10 +129,10 @@ rubberduck <input-midi> <output-midi> <llm-service> <api-key> <composition-promp
 
 ```bash
 # Add a walking bassline to a MIDI file
-rubberduck input.mid output.mid gemini "" "Add a walking bassline"
+scriabin input.mid output.mid gemini "" "Add a walking bassline"
 
 # Add a drum pattern using a specific API key
-rubberduck song.mid with_drums.mid gemini "your-api-key-here" "Add a simple rock beat"
+scriabin song.mid with_drums.mid gemini "your-api-key-here" "Add a simple rock beat"
 ```
 
 ### Development Usage with Gradle
@@ -395,9 +395,9 @@ To create a standalone JAR file or distribution package:
 ./gradlew distTar distZip
 ```
 
-The installDist task creates a complete distribution in `build/install/rubberduck/` with:
-- `bin/rubberduck` - Unix shell script
-- `bin/rubberduck.bat` - Windows batch script  
+The installDist task creates a complete distribution in `build/install/scriabin/` with:
+- `bin/scriabin` - Unix shell script
+- `bin/scriabin.bat` - Windows batch script  
 - `lib/` - All JAR dependencies
 
 ## Contributing
