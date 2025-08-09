@@ -18,6 +18,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import model.*
@@ -192,6 +194,164 @@ fun MidiNoteVisualization(
 }
 
 @Composable
+fun ApiKeyConfigDialog(
+    playbackService: model.MidiPlaybackService,
+    onDismiss: () -> Unit,
+    onSaved: () -> Unit
+) {
+    var apiKeys by remember { mutableStateOf(playbackService.getAllApiKeys()) }
+    var isSaving by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "🔑 API Key Configuration",
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(400.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Configure your API keys for LLM services:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Gemini API Key
+                    item {
+                        ApiKeyField(
+                            label = "Google Gemini API Key",
+                            serviceName = "gemini",
+                            currentValue = apiKeys["gemini"] ?: "",
+                            onValueChange = { apiKeys = apiKeys + ("gemini" to it) },
+                            placeholder = "Enter your Google AI Studio API key"
+                        )
+                    }
+                    
+                    // GPT-4 API Key
+                    item {
+                        ApiKeyField(
+                            label = "OpenAI GPT-4 API Key",
+                            serviceName = "gpt4",
+                            currentValue = apiKeys["gpt4"] ?: "",
+                            onValueChange = { apiKeys = apiKeys + ("gpt4" to it) },
+                            placeholder = "Enter your OpenAI API key"
+                        )
+                    }
+                    
+                    // Claude API Key
+                    item {
+                        ApiKeyField(
+                            label = "Anthropic Claude API Key",
+                            serviceName = "claude",
+                            currentValue = apiKeys["claude"] ?: "",
+                            onValueChange = { apiKeys = apiKeys + ("claude" to it) },
+                            placeholder = "Enter your Anthropic API key"
+                        )
+                    }
+                }
+                
+                if (errorMessage != null) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Text(
+                            text = "Error: $errorMessage",
+                            modifier = Modifier.padding(12.dp),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    isSaving = true
+                    errorMessage = null
+                    try {
+                        // Filter out empty keys
+                        val filteredKeys = apiKeys.filterValues { it.isNotBlank() }
+                        playbackService.saveAllApiKeys(filteredKeys)
+                        onSaved()
+                    } catch (e: Exception) {
+                        errorMessage = e.message
+                        isSaving = false
+                    }
+                },
+                enabled = !isSaving
+            ) {
+                if (isSaving) {
+                    Text("Saving...")
+                } else {
+                    Text("💾 Save Configuration")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun ApiKeyField(
+    label: String,
+    serviceName: String,
+    currentValue: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String
+) {
+    var isVisible by remember { mutableStateOf(false) }
+    
+    Column {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        
+        OutlinedTextField(
+            value = currentValue,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text(placeholder) },
+            visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                TextButton(onClick = { isVisible = !isVisible }) {
+                    Text(if (isVisible) "👁️" else "🔒")
+                }
+            },
+            singleLine = true
+        )
+        
+        if (currentValue.isNotBlank()) {
+            Text(
+                text = "✅ API key configured",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
 fun RubberDuckApp(
     state: AppState,
     playbackService: model.MidiPlaybackService,
@@ -200,19 +360,38 @@ fun RubberDuckApp(
     onRowUpdate: (String, MidiRow) -> Unit,
     onProcessRequest: (String) -> Unit,
     onDeleteRow: (String) -> Unit,
-    onClearAll: () -> Unit
+    onClearAll: () -> Unit,
+    onShowApiKeyConfig: () -> Unit,
+    onHideApiKeyConfig: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Header
-        Text(
-            text = "🎵 RubberDuck - LLM-Powered MIDI Composer",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        // Header with API Config button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "🎵 RubberDuck - LLM-Powered MIDI Composer",
+                style = MaterialTheme.typography.headlineMedium
+            )
+            
+            Button(
+                onClick = onShowApiKeyConfig,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            ) {
+                Text("🔑 API Keys")
+            }
+        }
         
         // Main content
         LazyColumn(
@@ -268,6 +447,18 @@ fun RubberDuckApp(
                 Text("🗑️ Clear All Rows")
             }
         }
+    }
+    
+    // Show API Key Configuration dialog
+    if (state.showApiKeyConfig) {
+        ApiKeyConfigDialog(
+            playbackService = playbackService,
+            onDismiss = onHideApiKeyConfig,
+            onSaved = {
+                onHideApiKeyConfig()
+                // The app will automatically refresh available services
+            }
+        )
     }
 }
 

@@ -49,4 +49,19 @@ interface MidiPlaybackService {
      * Gets visualization data for a MIDI file
      */
     fun getVisualizationData(filePath: String): MidiVisualizationData?
+    
+    /**
+     * Gets all API keys for configuration
+     */
+    fun getAllApiKeys(): Map<String, String>
+    
+    /**
+     * Updates a specific API key
+     */
+    fun updateApiKey(serviceName: String, apiKey: String)
+    
+    /**
+     * Saves all API keys at once
+     */
+    fun saveAllApiKeys(apiKeys: Map<String, String>)
 }

@@ -64,4 +64,31 @@ class JvmMidiPlaybackService(private val processingService: MidiProcessingServic
             null
         }
     }
+    
+    override fun getAllApiKeys(): Map<String, String> {
+        return try {
+            processingService.allApiKeys
+        } catch (e: Exception) {
+            println("Error getting API keys: ${e.message}")
+            emptyMap()
+        }
+    }
+    
+    override fun updateApiKey(serviceName: String, apiKey: String) {
+        try {
+            processingService.updateApiKey(serviceName, apiKey)
+        } catch (e: Exception) {
+            println("Error updating API key: ${e.message}")
+            throw e
+        }
+    }
+    
+    override fun saveAllApiKeys(apiKeys: Map<String, String>) {
+        try {
+            processingService.saveAllApiKeys(apiKeys)
+        } catch (e: Exception) {
+            println("Error saving API keys: ${e.message}")
+            throw e
+        }
+    }
 }

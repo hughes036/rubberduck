@@ -155,34 +155,12 @@ public class MidiProcessingService {
         Set<String> available = new HashSet<>();
         
         try {
-            // Check for Gemini API key using static method
-            try {
-                String geminiKey = ApiKeyManager.getApiKey("gemini");
-                if (geminiKey != null && !geminiKey.trim().isEmpty()) {
-                    available.add("GEMINI");
-                }
-            } catch (Exception e) {
-                System.out.println("Warning: Could not load Gemini API key: " + e.getMessage());
-            }
+            // Use ApiKeyManager to get only services with valid API keys
+            Set<String> servicesWithKeys = ApiKeyManager.getAvailableServices();
             
-            // Check for GPT-4 API key
-            try {
-                String gpt4Key = ApiKeyManager.getApiKey("gpt4");
-                if (gpt4Key != null && !gpt4Key.trim().isEmpty()) {
-                    available.add("GPT4");
-                }
-            } catch (Exception e) {
-                System.out.println("Warning: Could not load GPT-4 API key: " + e.getMessage());
-            }
-            
-            // Check for Claude API key
-            try {
-                String claudeKey = ApiKeyManager.getApiKey("claude");
-                if (claudeKey != null && !claudeKey.trim().isEmpty()) {
-                    available.add("CLAUDE");
-                }
-            } catch (Exception e) {
-                System.out.println("Warning: Could not load Claude API key: " + e.getMessage());
+            // Convert to uppercase format expected by UI
+            for (String service : servicesWithKeys) {
+                available.add(service.toUpperCase());
             }
             
         } catch (Exception e) {
@@ -285,5 +263,41 @@ public class MidiProcessingService {
      */
     public MidiVisualizationService.MidiVisualizationData getVisualizationData(String filePath) {
         return MidiVisualizationService.extractVisualizationData(filePath);
+    }
+    
+    /**
+     * Gets all API keys for configuration UI
+     */
+    public java.util.Map<String, String> getAllApiKeys() {
+        try {
+            return ApiKeyManager.loadApiKeys();
+        } catch (Exception e) {
+            System.out.println("Warning: Could not load API keys: " + e.getMessage());
+            return new java.util.HashMap<>();
+        }
+    }
+    
+    /**
+     * Updates an API key and saves configuration
+     */
+    public void updateApiKey(String serviceName, String apiKey) {
+        try {
+            ApiKeyManager.updateApiKey(serviceName, apiKey);
+        } catch (Exception e) {
+            System.err.println("Error updating API key for " + serviceName + ": " + e.getMessage());
+            throw new RuntimeException("Failed to update API key", e);
+        }
+    }
+    
+    /**
+     * Saves all API keys at once
+     */
+    public void saveAllApiKeys(java.util.Map<String, String> apiKeys) {
+        try {
+            ApiKeyManager.saveApiKeys(apiKeys);
+        } catch (Exception e) {
+            System.err.println("Error saving API keys: " + e.getMessage());
+            throw new RuntimeException("Failed to save API keys", e);
+        }
     }
 }

@@ -51,9 +51,23 @@ fun RubberDuckDesktopApp() {
         mutableStateOf(
             AppState(
                 rows = emptyList(),
-                availableServices = availableServices
+                availableServices = availableServices,
+                showApiKeyConfig = false
             )
         )
+    }
+    
+    // Function to refresh available services after API key changes
+    fun refreshAvailableServices() {
+        val newAvailableServiceStrings = processingService.availableServices
+        val newAvailableServices = try {
+            newAvailableServiceStrings.map { serviceName -> LlmService.valueOf(serviceName) }.toSet()
+        } catch (e: Exception) {
+            println("❌ ERROR mapping services: ${e.message}")
+            emptySet<LlmService>()
+        }
+        
+        appState = appState.copy(availableServices = newAvailableServices)
     }
     
     // Real-time position updates during playback
@@ -273,6 +287,13 @@ fun RubberDuckDesktopApp() {
                 rows = emptyList(),
                 nextRowNumber = 1
             )
+        },
+        onShowApiKeyConfig = {
+            appState = appState.copy(showApiKeyConfig = true)
+        },
+        onHideApiKeyConfig = {
+            appState = appState.copy(showApiKeyConfig = false)
+            refreshAvailableServices()
         }
     )
 }

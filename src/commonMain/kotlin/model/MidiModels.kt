@@ -51,7 +51,8 @@ enum class LlmService(val displayName: String, val serviceName: String) {
 data class AppState(
     val rows: List<MidiRow> = emptyList(),
     val availableServices: Set<LlmService> = emptySet(),
-    val nextRowNumber: Int = 1
+    val nextRowNumber: Int = 1,
+    val showApiKeyConfig: Boolean = false
 )
 
 /**
