@@ -39,6 +39,30 @@ public class MidiPlayer {
             }
             sequencer.open();
             
+            // Connect to a synthesizer for audio output
+            if (sequencer instanceof Sequencer) {
+                try {
+                    Synthesizer synthesizer = MidiSystem.getSynthesizer();
+                    if (synthesizer != null) {
+                        synthesizer.open();
+                        Receiver receiver = synthesizer.getReceiver();
+                        Transmitter transmitter = sequencer.getTransmitter();
+                        transmitter.setReceiver(receiver);
+                        System.out.println("🔊 MIDI synthesizer connected successfully");
+                    } else {
+                        System.out.println("⚠️ No synthesizer available, trying default receiver");
+                        // Try to get the default receiver (system MIDI)
+                        Receiver receiver = MidiSystem.getReceiver();
+                        Transmitter transmitter = sequencer.getTransmitter();
+                        transmitter.setReceiver(receiver);
+                        System.out.println("🔊 Default MIDI receiver connected");
+                    }
+                } catch (MidiUnavailableException e) {
+                    System.out.println("⚠️ Could not connect synthesizer: " + e.getMessage());
+                    System.out.println("   MIDI files may not produce sound");
+                }
+            }
+            
             // Add a meta event listener to detect when playback finishes
             sequencer.addMetaEventListener(new MetaEventListener() {
                 @Override
@@ -112,9 +136,8 @@ public class MidiPlayer {
             System.out.println("▶️ Started playback: " + currentFile);
             notifyPlaybackStarted();
         } else {
-            System.out.println("⏸️ Paused playback: " + currentFile);
-            sequencer.stop();
-            notifyPlaybackPaused();
+            // Pause instead of stop to maintain position
+            pause();
         }
     }
     
