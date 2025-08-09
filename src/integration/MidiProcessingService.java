@@ -279,4 +279,11 @@ public class MidiProcessingService {
                "EVENT|tick=3840|type=ShortMessage|command=128|channel=9|data1=38|data2=0|description=NOTE_OFF|note=38|velocity=0\n" +
                "EVENT|tick=3840|type=MetaMessage|metaType=47|description=END_OF_TRACK\n";
     }
+    
+    /**
+     * Gets visualization data for a MIDI file
+     */
+    public MidiVisualizationService.MidiVisualizationData getVisualizationData(String filePath) {
+        return MidiVisualizationService.extractVisualizationData(filePath);
+    }
 }

@@ -23,7 +23,8 @@ data class MidiFile(
     val name: String,
     val isPlaying: Boolean = false,
     val currentPosition: Float = 0f,
-    val duration: Float = 0f
+    val duration: Float = 0f,
+    val visualizationData: MidiVisualizationData? = null
 )
 
 /**
@@ -51,4 +52,24 @@ data class AppState(
     val rows: List<MidiRow> = emptyList(),
     val availableServices: Set<LlmService> = emptySet(),
     val nextRowNumber: Int = 1
+)
+
+/**
+ * MIDI visualization data
+ */
+data class NoteEvent(
+    val startTimeSeconds: Double,
+    val endTimeSeconds: Double,
+    val noteNumber: Int,
+    val velocity: Int,
+    val channel: Int
+) {
+    val durationSeconds: Double get() = endTimeSeconds - startTimeSeconds
+}
+
+data class MidiVisualizationData(
+    val noteEvents: List<NoteEvent>,
+    val durationSeconds: Double,
+    val minNote: Int,
+    val maxNote: Int
 )

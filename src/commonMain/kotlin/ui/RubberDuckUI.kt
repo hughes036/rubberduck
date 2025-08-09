@@ -17,6 +17,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import model.*
 import kotlin.math.floor
@@ -56,6 +58,58 @@ fun DrawScope.drawMidiGrid(width: Float, height: Float, trackColor: Color, lineC
             end = Offset(x, height),
             strokeWidth = 1.dp.toPx()
         )
+    }
+}
+
+fun DrawScope.drawActualMidiNotes(
+    midiFile: MidiFile,
+    width: Float,
+    height: Float,
+    noteColor: Color,
+    currentPosition: Float
+) {
+    val visualizationData = midiFile.visualizationData
+    if (visualizationData == null || visualizationData.noteEvents.isEmpty()) {
+        // Fallback to simulated data if no visualization data available
+        drawSimulatedMidiNotes(width, height, noteColor, currentPosition, midiFile.duration)
+        return
+    }
+    
+    val noteRange = visualizationData.maxNote - visualizationData.minNote
+    val noteHeight = if (noteRange > 0) height / noteRange else height / 12
+    val duration = midiFile.duration.toDouble()
+    
+    // Group notes by channel for color coding
+    val channelColors = listOf(
+        noteColor,
+        noteColor.copy(alpha = 0.8f),
+        noteColor.copy(red = noteColor.red * 0.8f),
+        noteColor.copy(green = noteColor.green * 0.8f),
+        noteColor.copy(blue = noteColor.blue * 0.8f)
+    )
+    
+    visualizationData.noteEvents.forEach { noteEvent ->
+        if (duration > 0) {
+            val startX = (noteEvent.startTimeSeconds / duration * width).toFloat()
+            val noteWidth = ((noteEvent.endTimeSeconds - noteEvent.startTimeSeconds) / duration * width).toFloat()
+            val normalizedNote = noteEvent.noteNumber - visualizationData.minNote
+            val y = height - (normalizedNote * noteHeight) - noteHeight
+            
+            // Make notes currently playing more prominent
+            val isCurrentlyPlaying = currentPosition >= noteEvent.startTimeSeconds && 
+                                   currentPosition <= noteEvent.endTimeSeconds
+            val baseAlpha = (noteEvent.velocity / 127f).coerceIn(0.3f, 1.0f)
+            val alpha = if (isCurrentlyPlaying) baseAlpha else baseAlpha * 0.6f
+            
+            // Use channel-based coloring
+            val channelColor = channelColors[noteEvent.channel % channelColors.size]
+            
+            drawRect(
+                color = channelColor.copy(alpha = alpha),
+                topLeft = Offset(startX, y),
+                size = Size(noteWidth.coerceAtLeast(2f), noteHeight * 0.8f)
+            )
+        }
     }
 }
 
@@ -121,8 +175,8 @@ fun MidiNoteVisualization(
         // Draw background grid
         drawMidiGrid(width, height, surfaceVariant, onSurface.copy(alpha = 0.3f))
         
-        // Draw simulated MIDI notes (you would replace this with actual MIDI data parsing)
-        drawSimulatedMidiNotes(width, height, primaryColor, currentPosition, midiFile.duration)
+        // Draw actual MIDI notes from the file data
+        drawActualMidiNotes(midiFile, width, height, primaryColor, currentPosition)
         
         // Draw playhead
         if (midiFile.duration > 0f) {
@@ -144,7 +198,9 @@ fun RubberDuckApp(
     onAddMidiFile: () -> Unit,
     onAddPromptOnlyRow: () -> Unit,
     onRowUpdate: (String, MidiRow) -> Unit,
-    onProcessRequest: (String) -> Unit
+    onProcessRequest: (String) -> Unit,
+    onDeleteRow: (String) -> Unit,
+    onClearAll: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -169,10 +225,13 @@ fun RubberDuckApp(
                     availableServices = state.availableServices,
                     playbackService = playbackService,
                     onRowUpdate = { updatedRow -> onRowUpdate(row.id, updatedRow) },
-                    onProcessRequest = { onProcessRequest(row.id) }
-        )
-    }
-}        // Add buttons
+                    onProcessRequest = { onProcessRequest(row.id) },
+                    onDeleteRow = { onDeleteRow(row.id) }
+                )
+            }
+        }
+        
+        // Add buttons
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -193,6 +252,22 @@ fun RubberDuckApp(
                 Text("✨ Generate from Prompt")
             }
         }
+        
+        // Clear all button
+        if (state.rows.isNotEmpty()) {
+            Button(
+                onClick = onClearAll,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Text("🗑️ Clear All Rows")
+            }
+        }
     }
 }
 
@@ -202,32 +277,50 @@ fun MidiRowComponent(
     availableServices: Set<LlmService>,
     playbackService: model.MidiPlaybackService,
     onRowUpdate: (MidiRow) -> Unit,
-    onProcessRequest: () -> Unit
+    onProcessRequest: () -> Unit,
+    onDeleteRow: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
-            .border(2.dp, Color.Black, RectangleShape),
+            .border(1.dp, Color.Black, RectangleShape),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Row number header with derivation info
-            Column {
-                Text(
-                    text = "Row ${row.rowNumber}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                
-                // Derivation subtitle (if this row was derived from another)
-                row.derivedFrom?.let { derivation ->
+            // Row header with delete button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column {
                     Text(
-                        text = "(Derived from Row ${derivation.sourceRowNumber} using prompt: \"${derivation.prompt}\")",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 2.dp)
+                        text = "Row ${row.rowNumber}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    
+                    // Derivation subtitle (if this row was derived from another)
+                    row.derivedFrom?.let { derivation ->
+                        Text(
+                            text = "(Derived from Row ${derivation.sourceRowNumber} using prompt: \"${derivation.prompt}\")",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                }
+                
+                // Delete button
+                IconButton(
+                    onClick = onDeleteRow,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Text(
+                        text = "❌",
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
@@ -419,11 +512,36 @@ fun MidiFileSection(
                         text = midiFile.name,
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    Text(
-                        text = midiFile.path,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    // File path with copy button
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = midiFile.path,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        
+                        val clipboardManager = LocalClipboardManager.current
+                        Button(
+                            onClick = { 
+                                clipboardManager.setText(AnnotatedString(midiFile.path))
+                            },
+                            modifier = Modifier.height(32.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "📋 Copy",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
                 }
                 
                 // Playback controls

@@ -1,6 +1,8 @@
 package ui
 
 import model.MidiPlaybackService as MidiPlaybackServiceInterface
+import model.MidiVisualizationData
+import model.NoteEvent
 import integration.MidiProcessingService
 
 /**
@@ -34,5 +36,32 @@ class JvmMidiPlaybackService(private val processingService: MidiProcessingServic
     
     override fun hasPlaybackJustFinished(): Boolean {
         return integration.MidiPlaybackService.getInstance().hasPlaybackJustFinished()
+    }
+    
+    override fun getVisualizationData(filePath: String): MidiVisualizationData? {
+        return try {
+            val javaData = processingService.getVisualizationData(filePath)
+            
+            // Convert Java objects to Kotlin objects
+            val noteEvents = javaData.noteEvents.map { javaEvent ->
+                NoteEvent(
+                    startTimeSeconds = javaEvent.getStartTimeSeconds(javaData.ticksPerSecond),
+                    endTimeSeconds = javaEvent.getEndTimeSeconds(javaData.ticksPerSecond),
+                    noteNumber = javaEvent.noteNumber,
+                    velocity = javaEvent.velocity,
+                    channel = javaEvent.channel
+                )
+            }
+            
+            MidiVisualizationData(
+                noteEvents = noteEvents,
+                durationSeconds = javaData.durationSeconds,
+                minNote = javaData.minNote,
+                maxNote = javaData.maxNote
+            )
+        } catch (e: Exception) {
+            println("Error getting visualization data: ${e.message}")
+            null
+        }
     }
 }

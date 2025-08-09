@@ -152,6 +152,9 @@ fun RubberDuckDesktopApp() {
                     100f // Fallback duration
                 }
                 
+                // Load visualization data
+                val visualizationData = playbackService.getVisualizationData(selectedFile.absolutePath)
+                
                 val newRow = MidiRow(
                     id = UUID.randomUUID().toString(),
                     rowNumber = appState.nextRowNumber,
@@ -160,10 +163,11 @@ fun RubberDuckDesktopApp() {
                         name = selectedFile.name,
                         isPlaying = false,
                         currentPosition = 0f,
-                        duration = actualDuration
+                        duration = actualDuration,
+                        visualizationData = visualizationData
                     ),
                     prompt = "",
-                    selectedLlm = appState.availableServices.firstOrNull() ?: LlmService.GEMINI,
+                    selectedLlm = LlmService.GEMINI,
                     isProcessing = false,
                     outputFile = null,
                     error = null
@@ -180,7 +184,7 @@ fun RubberDuckDesktopApp() {
                 rowNumber = appState.nextRowNumber,
                 inputFile = null, // No input file for prompt-only generation
                 prompt = "",
-                selectedLlm = appState.availableServices.firstOrNull() ?: LlmService.GEMINI,
+                selectedLlm = LlmService.GEMINI,
                 isProcessing = false,
                 outputFile = null,
                 error = null
@@ -207,10 +211,68 @@ fun RubberDuckDesktopApp() {
         },
         onProcessRequest = { rowId ->
             scope.launch {
-                processRow(appState, rowId, processingService) { newState ->
+                processRow(appState, rowId, processingService, playbackService) { newState ->
                     appState = newState
                 }
             }
+        },
+        onDeleteRow = { rowId ->
+            val rowToDelete = appState.rows.find { it.id == rowId }
+            rowToDelete?.let { row ->
+                // Delete generated files if this row was derived
+                row.outputFile?.let { outputFile ->
+                    try {
+                        val file = File(outputFile.path)
+                        if (file.exists()) {
+                            file.delete()
+                            println("🗑️ Deleted generated file: ${outputFile.path}")
+                        }
+                    } catch (e: Exception) {
+                        println("⚠️ Could not delete file ${outputFile.path}: ${e.message}")
+                    }
+                }
+                
+                // Stop playback if any files from this row are playing
+                row.inputFile?.let { if (it.isPlaying) playbackService.stop(it.path) }
+                row.outputFile?.let { if (it.isPlaying) playbackService.stop(it.path) }
+                
+                // Remove row and renumber remaining rows
+                val remainingRows = appState.rows.filter { it.id != rowId }
+                val renumberedRows = remainingRows.mapIndexed { index, row ->
+                    row.copy(rowNumber = index + 1)
+                }
+                
+                appState = appState.copy(
+                    rows = renumberedRows,
+                    nextRowNumber = renumberedRows.size + 1
+                )
+            }
+        },
+        onClearAll = {
+            // Delete all generated files
+            appState.rows.forEach { row ->
+                row.outputFile?.let { outputFile ->
+                    try {
+                        val file = File(outputFile.path)
+                        if (file.exists()) {
+                            file.delete()
+                            println("🗑️ Deleted generated file: ${outputFile.path}")
+                        }
+                    } catch (e: Exception) {
+                        println("⚠️ Could not delete file ${outputFile.path}: ${e.message}")
+                    }
+                }
+                
+                // Stop all playback
+                row.inputFile?.let { if (it.isPlaying) playbackService.stop(it.path) }
+                row.outputFile?.let { if (it.isPlaying) playbackService.stop(it.path) }
+            }
+            
+            // Clear all rows
+            appState = appState.copy(
+                rows = emptyList(),
+                nextRowNumber = 1
+            )
         }
     )
 }
@@ -219,6 +281,7 @@ private suspend fun processRow(
     appState: AppState,
     rowId: String,
     processingService: MidiProcessingService,
+    playbackService: ui.JvmMidiPlaybackService,
     onStateUpdate: (AppState) -> Unit
 ) = withContext(Dispatchers.IO) {
     val row = appState.rows.find { it.id == rowId } ?: return@withContext
@@ -265,12 +328,16 @@ private suspend fun processRow(
                     120f // Fallback duration
                 }
                 
+                // Load visualization data for the output file
+                val visualizationData = playbackService.getVisualizationData(outputFile.absolutePath)
+                
                 val outputMidiFile = MidiFile(
                     path = outputFile.absolutePath,
                     name = outputFile.name,
                     isPlaying = false,
                     currentPosition = 0f,
-                    duration = actualDuration
+                    duration = actualDuration,
+                    visualizationData = visualizationData
                 )
                 
                 // Create a new derived row instead of updating the existing one
@@ -279,7 +346,7 @@ private suspend fun processRow(
                     rowNumber = appState.nextRowNumber,
                     inputFile = outputMidiFile, // The derived row's input is the LLM output
                     prompt = "",
-                    selectedLlm = appState.availableServices.firstOrNull() ?: LlmService.GEMINI,
+                    selectedLlm = LlmService.GEMINI,
                     isProcessing = false,
                     outputFile = null,
                     error = null,

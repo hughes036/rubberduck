@@ -44,4 +44,9 @@ interface MidiPlaybackService {
      * This flag is automatically reset when checked.
      */
     fun hasPlaybackJustFinished(): Boolean
+    
+    /**
+     * Gets visualization data for a MIDI file
+     */
+    fun getVisualizationData(filePath: String): MidiVisualizationData?
 }
