@@ -1,28 +1,96 @@
 plugins {
     id 'java'
-    id 'application'
-}
-
-application {
-    mainClass = 'Main'
-    applicationName = 'rubberduck'
+    id 'org.jetbrains.kotlin.multiplatform' version '1.9.10'
+    id 'org.jetbrains.compose' version '1.5.11'
 }
 
 group = 'com.rubberduck'
 version = '1.0-SNAPSHOT'
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
 repositories {
     mavenCentral()
+    google()
+    maven { url = 'https://maven.pkg.jetbrains.space/public/p/compose/dev' }
+}
+
+kotlin {
+    jvm {
+        compilations.all {
+            kotlinOptions.jvmTarget = '17'
+        }
+        withJava()
+    }
+    
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation compose.desktop.common
+                implementation compose.material3
+                implementation compose.ui
+                implementation compose.foundation
+                implementation compose.runtime
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+            }
+        }
+        
+        jvmMain {
+            dependencies {
+                implementation compose.desktop.currentOs
+                implementation 'com.google.genai:google-genai:1.0.0'
+                implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.7.3'
+            }
+        }
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "ui.DesktopAppKt"
+        nativeDistributions {
+            targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg, 
+                        org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi, 
+                        org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb)
+            packageName = "RubberDuck"
+            packageVersion = "1.0.0"
+        }
+        jvmArgs("--add-exports", "java.desktop/sun.java2d=ALL-UNNAMED")
+    }
+}
+
+// Configure the Compose run task to load API keys
+tasks.whenTaskAdded { task ->
+    if (task.name == 'run' || task.name == 'runDistributable') {
+        task.doFirst {
+            def apikeysFile = new File(projectDir, 'apikeys.json')
+            if (apikeysFile.exists()) {
+                try {
+                    def json = new groovy.json.JsonSlurper().parseText(apikeysFile.text)
+                    if (json.gemini && !json.gemini.toString().trim().isEmpty()) {
+                        // Set both system property AND environment variable for GUI
+                        System.setProperty('GOOGLE_API_KEY', json.gemini)
+                        task.environment('GOOGLE_API_KEY', json.gemini)
+                        println "✓ Loaded Gemini API key from apikeys.json for GUI"
+                    }
+                } catch (Exception e) {
+                    println "Warning: Could not parse apikeys.json: ${e.message}"
+                }
+            }
+        }
+    }
 }
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
     
-    // Google GenAI for Gemini integration
+    // Keep existing dependencies for CLI compatibility
     implementation 'com.google.genai:google-genai:1.0.0'
-    
-    // Jackson for JSON parsing
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
 }
 
@@ -30,18 +98,13 @@ test {
     useJUnitPlatform()
 }
 
-// Custom task to run Gemini Hello World example
-task runGemini(type: JavaExec) {
+// CLI application configuration
+task runCLI(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'gemini.GeminiHelloWorld'
+    mainClass = 'Main'
+    group = 'application'
+    description = 'Run the CLI application'
     
-    // Pass through environment variables
-    environment System.getenv()
-}
-
-
-// Configure the run task to set environment variables from apikeys.json
-run {
     // Pass through all existing environment variables
     environment System.getenv()
     
@@ -76,6 +139,29 @@ run {
     }
 }
 
+// Custom task to run Gemini Hello World example
+task runGemini(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'gemini.GeminiHelloWorld'
+    
+    // Pass through environment variables
+    environment System.getenv()
+}
+
+// UI application task
+tasks.register('runUI') {
+    group = 'application'
+    description = 'Run the Compose UI application'
+    dependsOn 'jvmRun'
+}
+
+tasks.register('packageUI') {
+    group = 'distribution'
+    description = 'Package the UI application for distribution'
+    dependsOn 'packageDistributionForCurrentOS'
+}
+
+// Java source configuration for CLI components
 sourceSets {
     main {
         java {

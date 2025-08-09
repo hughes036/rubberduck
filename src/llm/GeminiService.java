@@ -21,6 +21,12 @@ public class GeminiService implements LLMService {
     public GeminiService() {
         // Read API key from environment variable as required by Google GenAI library
         String envApiKey = System.getenv("GOOGLE_API_KEY");
+        
+        // If environment variable is not set, try system property as fallback
+        if (envApiKey == null || envApiKey.trim().isEmpty()) {
+            envApiKey = System.getProperty("GOOGLE_API_KEY");
+        }
+        
         if (envApiKey == null || envApiKey.trim().isEmpty()) {
             throw new RuntimeException(
                 "GOOGLE_API_KEY environment variable not set. " +

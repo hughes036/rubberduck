@@ -1,10 +1,12 @@
 # Rubberduck Project
 
-An LLM-powered MIDI composition tool that uses artificial intelligence to enhance and modify MIDI files based on natural language prompts. Originally a MIDI processing library, it now features integrated AI composition capabilities using services like Google's Gemini.
+An LLM-powered MIDI composition tool that uses artificial intelligence to enhance and modify MIDI files based on natural language prompts. Features both a command-line interface and a modern graphical user interface built with Kotlin Multiplatform Compose.
 
 ## Features
 
 - 🎵 **LLM-Powered MIDI Composition** - Transform MIDI files using AI with natural language prompts
+- 🖥️ **Modern GUI Interface** - Intuitive desktop application with drag-and-drop MIDI processing
+- 📱 **Cross-Platform Desktop** - Built with Kotlin Multiplatform Compose for Windows, macOS, and Linux
 - 🎹 **MIDI Processing** - Convert MIDI files to serialized text format and back
 - 🤖 **Multiple LLM Support** - Pluggable architecture supporting various AI services
 - 🎼 **Intelligent Composition** - Add basslines, drums, harmonies, and more using AI
@@ -13,7 +15,15 @@ An LLM-powered MIDI composition tool that uses artificial intelligence to enhanc
 
 ## Quick Start
 
-### 🚀 For Users (Install CLI)
+### �️ For Users (GUI Application)
+```bash
+git clone https://github.com/your-username/rubberduck.git
+cd rubberduck
+# Set up your API key in apikeys.json (copy from apikeys.json.example)
+./gradlew run  # Launches the GUI application
+```
+
+### �🚀 For Users (Install CLI)
 ```bash
 git clone https://github.com/your-username/rubberduck.git
 cd rubberduck
@@ -27,7 +37,7 @@ rubberduck input.mid output.mid gemini "" "Add a walking bassline"
 git clone https://github.com/your-username/rubberduck.git
 cd rubberduck
 # Set up your API key in apikeys.json
-./gradlew run --args="example.mid output.mid gemini \"\" \"Add drums\""
+./gradlew runCLI --args="example.mid output.mid gemini \"\" \"Add drums\""
 ```
 
 ## Installation
@@ -77,6 +87,30 @@ cd rubberduck
 
 ## Usage
 
+### GUI Application
+
+The desktop GUI provides an intuitive interface for MIDI composition with LLMs:
+
+```bash
+# Launch the GUI application
+./gradlew run
+
+# Or use the specific UI task
+./gradlew runUI
+```
+
+**GUI Features:**
+- **File Selection**: Click "➕ Add Input MIDI File" to select MIDI files from your system
+- **LLM Integration**: Choose from available LLM services (Gemini, GPT-4, Claude) via radio buttons
+- **Prompt Input**: Enter natural language prompts describing desired musical changes
+- **Real-time Processing**: Submit requests and monitor processing status with progress indicators
+- **MIDI Playback**: Preview input and output MIDI files with built-in playback controls
+- **Error Handling**: Clear error messages and status feedback
+- **Multiple Rows**: Process multiple MIDI files simultaneously in a vertical scrolling layout
+- **Output Chaining**: Use LLM output as input for subsequent processing steps
+
+### Command Line Interface
+
 Once installed, you can use the `rubberduck` command from anywhere in your terminal.
 
 ```bash
@@ -103,20 +137,30 @@ rubberduck song.mid with_drums.mid gemini "your-api-key-here" "Add a simple rock
 
 ### Development Usage with Gradle
 
-For development purposes, you can run the tool directly with Gradle without installing it first. This is especially useful when you're modifying the code and want to test changes quickly.
+For development purposes, you can run both the GUI and CLI applications directly with Gradle without installing them first. This is especially useful when you're modifying the code and want to test changes quickly.
 
+#### GUI Development
 ```bash
-# Basic Gradle run command
-./gradlew run --args="input.mid output.mid gemini \"\" \"Add a walking bassline\""
+# Launch the GUI application for testing
+./gradlew run
+
+# Alternative UI-specific task
+./gradlew runUI
+```
+
+#### CLI Development
+```bash
+# Basic CLI run command
+./gradlew runCLI --args="input.mid output.mid gemini \"\" \"Add a walking bassline\""
 
 # Add drums to an existing melody
-./gradlew run --args="example.mid enhanced.mid gemini \"\" \"Add a simple rock drum pattern\""
+./gradlew runCLI --args="example.mid enhanced.mid gemini \"\" \"Add a simple rock drum pattern\""
 
 # Create harmony parts
-./gradlew run --args="melody.mid harmonized.mid gemini \"\" \"Add three-part vocal harmony\""
+./gradlew runCLI --args="melody.mid harmonized.mid gemini \"\" \"Add three-part vocal harmony\""
 
 # Use a custom API key inline
-./gradlew run --args="song.mid final.mid gemini \"your-api-key\" \"Add bass and percussion\""
+./gradlew runCLI --args="song.mid final.mid gemini \"your-api-key\" \"Add bass and percussion\""
 ```
 
 **Note:** When using `--args` with Gradle:
