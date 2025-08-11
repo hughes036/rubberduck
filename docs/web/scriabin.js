@@ -1,0 +1,2 @@
+!function(e,t){"object"==typeof exports&&"object"==typeof module?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.scriabin=t():e.scriabin=t()}(this,()=>{return e={887:function(e,t){var o,r;void 0===(r="function"==typeof(o=function(e){"use strict";return e})?o.apply(t,[t]):o)||(e.exports=r)}},t={},function o(r){var n=t[r];if(void 0!==n)return n.exports;var i=t[r]={exports:{}};return e[r].call(i.exports,i,i.exports,o),i.exports}(887);var e,t});
+//# sourceMappingURL=scriabin.js.map
