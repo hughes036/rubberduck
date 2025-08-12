@@ -350,7 +350,7 @@ fun ApiKeyField(
 }
 
 @Composable
-fun RubberDuckApp(
+fun ScriabinApp(
     state: AppState,
     playbackService: model.MidiPlaybackService,
     onAddMidiFile: () -> Unit,
@@ -377,7 +377,7 @@ fun RubberDuckApp(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "🎵 RubberDuck - LLM-Powered MIDI Composer",
+                text = "🎵 Scriabin - LLM-Powered MIDI Composer",
                 style = MaterialTheme.typography.headlineMedium
             )
             

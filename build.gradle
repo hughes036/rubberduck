@@ -4,7 +4,7 @@ plugins {
     id 'org.jetbrains.compose' version '1.5.11'
 }
 
-group = 'com.rubberduck'
+group = 'com.scriabin'
 version = '1.0-SNAPSHOT'
 
 java {
@@ -26,13 +26,18 @@ kotlin {
         withJava()
     }
     
+    js(IR) {
+        browser {
+            commonWebpackConfig {
+                outputFileName = "scriabin.js"
+            }
+        }
+        binaries.executable()
+    }
+    
     sourceSets {
         commonMain {
             dependencies {
-                implementation compose.desktop.common
-                implementation compose.material3
-                implementation compose.ui
-                implementation compose.foundation
                 implementation compose.runtime
                 implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
             }
@@ -41,9 +46,21 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation compose.desktop.currentOs
+                implementation compose.desktop.common
+                implementation compose.material3
+                implementation compose.ui
+                implementation compose.foundation
                 implementation 'com.google.genai:google-genai:1.0.0'
                 implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
                 implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.7.3'
+            }
+        }
+        
+        jsMain {
+            dependencies {
+                implementation compose.web.core
+                implementation compose.runtime
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
             }
         }
     }
@@ -56,7 +73,7 @@ compose.desktop {
             targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg, 
                         org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi, 
                         org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb)
-            packageName = "RubberDuck"
+            packageName = "Scriabin"
             packageVersion = "1.0.0"
         }
         jvmArgs("--add-exports", "java.desktop/sun.java2d=ALL-UNNAMED")
@@ -174,4 +191,21 @@ sourceSets {
             srcDirs = ['src/test']
         }
     }
+}
+
+// Task to copy JS build output to docs folder for GitHub Pages
+task copyJsDistribution(type: Copy) {
+    group = 'build'
+    description = 'Copy JavaScript distribution to docs folder for GitHub Pages'
+    dependsOn 'jsBrowserDistribution'
+    
+    from 'build/dist/js/productionExecutable'
+    into 'docs/web'
+}
+
+// Task to build web app for GitHub Pages
+task buildWeb {
+    group = 'build'
+    description = 'Build the web application for GitHub Pages deployment'
+    dependsOn 'copyJsDistribution'
 }

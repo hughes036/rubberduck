@@ -20,17 +20,17 @@ import javax.swing.filechooser.FileNameExtensionFilter
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
-        title = "RubberDuck - LLM MIDI Composer",
+        title = "Scriabin - LLM MIDI Composer",
         state = rememberWindowState(size = DpSize(1000.dp, 800.dp))
     ) {
         MaterialTheme {
-            RubberDuckDesktopApp()
+            ScriabinDesktopApp()
         }
     }
 }
 
 @Composable
-fun RubberDuckDesktopApp() {
+fun ScriabinDesktopApp() {
     val processingService = remember { MidiProcessingService() }
     val playbackService = remember { JvmMidiPlaybackService(processingService) }
     val scope = rememberCoroutineScope()
@@ -153,7 +153,7 @@ fun RubberDuckDesktopApp() {
         }
     }
     
-    RubberDuckApp(
+    ScriabinApp(
         state = appState,
         playbackService = playbackService,
         onAddMidiFile = {
