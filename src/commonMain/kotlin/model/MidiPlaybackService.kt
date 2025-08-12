@@ -17,10 +17,19 @@ interface MidiPlaybackService {
      * @return true if now playing, false if paused
      */
     fun playPauseFile(midiFile: MidiFile): Boolean {
-        return if (midiFile.isInMemory && midiFile.serializedMidiData != null && midiFile.sessionId != null) {
+        return if (
+            midiFile.isInMemory 
+            && midiFile.serializedMidiData != null 
+            && midiFile.sessionId != null
+        ) {
+            // In-memory playback: use serialized MIDI data with session ID
             playPauseInMemory(midiFile.serializedMidiData, midiFile.sessionId)
-        } else {
+        } else if (midiFile.path.isNotBlank()) {
+            // File-based playback: use file path for traditional MIDI file playback
             playPause(midiFile.path)
+        } else {
+            // No valid playback method available - throw error
+            throw IllegalArgumentException("Cannot play MIDI file: path is blank and no valid in-memory data available")
         }
     }
     
