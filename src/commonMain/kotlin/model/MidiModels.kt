@@ -16,7 +16,7 @@ data class MidiRow(
 )
 
 /**
- * Represents a MIDI file with metadata
+ * Represents a MIDI file with metadata and in-memory support
  */
 data class MidiFile(
     val path: String,
@@ -24,8 +24,19 @@ data class MidiFile(
     val isPlaying: Boolean = false,
     val currentPosition: Float = 0f,
     val duration: Float = 0f,
-    val visualizationData: MidiVisualizationData? = null
-)
+    val visualizationData: MidiVisualizationData? = null,
+    val serializedMidiData: String? = null, // In-memory MIDI data
+    val sessionId: String? = null // For in-memory playback sessions
+) {
+    // Helper properties
+    val isInMemory: Boolean get() = sessionId != null
+    val playbackIdentifier: String get() = sessionId ?: run {
+        if (path.isEmpty()) {
+            throw IllegalStateException("Cannot identify MIDI file: both sessionId and path are invalid")
+        }
+        path
+    }
+}
 
 /**
  * Tracks the derivation history of a MIDI row

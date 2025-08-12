@@ -64,7 +64,34 @@ public class MidiVisualizationService {
         try {
             File file = new File(filePath);
             Sequence sequence = MidiSystem.getSequence(file);
-            
+            return extractVisualizationDataFromSequence(sequence);
+        } catch (Exception e) {
+            System.err.println("Error extracting visualization data from file: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Extracts visualization data from serialized MIDI data (in-memory version)
+     */
+    public static MidiVisualizationData extractVisualizationDataFromMemory(String serializedMidi) {
+        try {
+            // Deserialize to Sequence object directly
+            Sequence sequence = midi.MidiDeserializer.deserializeToSequence(serializedMidi);
+            return extractVisualizationDataFromSequence(sequence);
+        } catch (Exception e) {
+            System.err.println("Error extracting visualization data from memory: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Core method that extracts visualization data from a Sequence object
+     */
+    private static MidiVisualizationData extractVisualizationDataFromSequence(Sequence sequence) {
+        try {
             List<NoteEvent> noteEvents = new ArrayList<>();
             List<NoteOnEvent> pendingNotes = new ArrayList<>();
             

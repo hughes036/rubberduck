@@ -14,6 +14,7 @@ import java.util.TimerTask;
 public class MidiPlayer {
     private static MidiPlayer instance;
     private Sequencer sequencer;
+    private Synthesizer synthesizer; // Store synthesizer to properly close it later
     private Sequence currentSequence;
     private String currentFile;
     private List<PlaybackListener> listeners = new ArrayList<>();
@@ -38,6 +39,30 @@ public class MidiPlayer {
                 throw new RuntimeException("No MIDI sequencer available on this system");
             }
             sequencer.open();
+            
+            // Connect to a synthesizer for audio output
+            if (sequencer instanceof Sequencer) {
+                try {
+                    synthesizer = MidiSystem.getSynthesizer();
+                    if (synthesizer != null) {
+                        synthesizer.open();
+                        Receiver receiver = synthesizer.getReceiver();
+                        Transmitter transmitter = sequencer.getTransmitter();
+                        transmitter.setReceiver(receiver);
+                        System.out.println("🔊 MIDI synthesizer connected successfully");
+                    } else {
+                        System.out.println("⚠️ No synthesizer available, trying default receiver");
+                        // Try to get the default receiver (system MIDI)
+                        Receiver receiver = MidiSystem.getReceiver();
+                        Transmitter transmitter = sequencer.getTransmitter();
+                        transmitter.setReceiver(receiver);
+                        System.out.println("🔊 Default MIDI receiver connected");
+                    }
+                } catch (MidiUnavailableException e) {
+                    System.out.println("⚠️ Could not connect synthesizer: " + e.getMessage());
+                    System.out.println("   MIDI files may not produce sound");
+                }
+            }
             
             // Add a meta event listener to detect when playback finishes
             sequencer.addMetaEventListener(new MetaEventListener() {
@@ -84,6 +109,21 @@ public class MidiPlayer {
     }
     
     /**
+     * Loads MIDI data from serialized string (in-memory version)
+     */
+    public void loadFromSerializedData(String serializedMidi, String sessionId) throws Exception {
+        // Use MidiDeserializer to convert serialized data to Sequence
+        currentSequence = midi.MidiDeserializer.deserializeToSequence(serializedMidi);
+        currentFile = sessionId; // Use session ID as filename identifier
+        sequencer.setSequence(currentSequence);
+        sequencer.setTickPosition(0);
+        
+        System.out.println("🎵 Loaded MIDI from memory: " + sessionId);
+        System.out.println("   Duration: " + (currentSequence.getMicrosecondLength() / 1000000.0) + " seconds");
+        System.out.println("   Tracks: " + currentSequence.getTracks().length);
+    }
+    
+    /**
      * Starts playback of the loaded MIDI file.
      */
     public void play() {
@@ -97,9 +137,8 @@ public class MidiPlayer {
             System.out.println("▶️ Started playback: " + currentFile);
             notifyPlaybackStarted();
         } else {
-            System.out.println("⏸️ Paused playback: " + currentFile);
-            sequencer.stop();
-            notifyPlaybackPaused();
+            // Pause instead of stop to maintain position
+            pause();
         }
     }
     
@@ -168,6 +207,14 @@ public class MidiPlayer {
         if (currentFile == null) return false;
         File file = new File(filePath);
         return currentFile.equals(file.getName());
+    }
+    
+    /**
+     * Checks if the specified session is currently loaded (for in-memory data).
+     */
+    public boolean isSessionLoaded(String sessionId) {
+        if (currentFile == null) return false;
+        return currentFile.equals(sessionId);
     }
     
     /**
@@ -271,6 +318,10 @@ public class MidiPlayer {
         stopPositionUpdates();
         if (sequencer != null) {
             sequencer.close();
+        }
+        if (synthesizer != null) {
+            synthesizer.close();
+            System.out.println("🔊 MIDI synthesizer closed");
         }
     }
 }
