@@ -14,6 +14,7 @@ import java.util.TimerTask;
 public class MidiPlayer {
     private static MidiPlayer instance;
     private Sequencer sequencer;
+    private Synthesizer synthesizer; // Store synthesizer to properly close it later
     private Sequence currentSequence;
     private String currentFile;
     private List<PlaybackListener> listeners = new ArrayList<>();
@@ -42,7 +43,7 @@ public class MidiPlayer {
             // Connect to a synthesizer for audio output
             if (sequencer instanceof Sequencer) {
                 try {
-                    Synthesizer synthesizer = MidiSystem.getSynthesizer();
+                    synthesizer = MidiSystem.getSynthesizer();
                     if (synthesizer != null) {
                         synthesizer.open();
                         Receiver receiver = synthesizer.getReceiver();
@@ -317,6 +318,10 @@ public class MidiPlayer {
         stopPositionUpdates();
         if (sequencer != null) {
             sequencer.close();
+        }
+        if (synthesizer != null) {
+            synthesizer.close();
+            System.out.println("🔊 MIDI synthesizer closed");
         }
     }
 }
