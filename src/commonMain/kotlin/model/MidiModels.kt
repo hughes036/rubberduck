@@ -29,8 +29,13 @@ data class MidiFile(
     val sessionId: String? = null // For in-memory playback sessions
 ) {
     // Helper properties
-    val isInMemory: Boolean get() = serializedMidiData != null
-    val playbackIdentifier: String get() = sessionId ?: path
+    val isInMemory: Boolean get() = sessionId != null
+    val playbackIdentifier: String get() = sessionId ?: run {
+        if (path.isEmpty()) {
+            throw IllegalStateException("Cannot identify MIDI file: both sessionId and path are invalid")
+        }
+        path
+    }
 }
 
 /**
