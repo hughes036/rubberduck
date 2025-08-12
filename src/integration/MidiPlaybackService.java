@@ -187,12 +187,23 @@ public class MidiPlaybackService implements MidiPlayer.PlaybackListener {
     }
     
     /**
-     * Stops playback of in-memory MIDI data
+     * Stops playback of in-memory MIDI data for the specified session
      * @param sessionId The session identifier
      */
     public void stopInMemory(String sessionId) {
-        // Just stop playback, session remains loaded
-        player.stop();
+        // Input validation
+        Objects.requireNonNull(sessionId, "sessionId cannot be null");
+        if (sessionId.trim().isEmpty()) {
+            throw new IllegalArgumentException("sessionId cannot be empty");
+        }
+        
+        // Only stop if the specified session is currently loaded
+        if (player.isSessionLoaded(sessionId)) {
+            System.out.println("🔍 DEBUG: Stopping playback for session " + sessionId);
+            player.stop();
+        } else {
+            System.out.println("🔍 DEBUG: Session " + sessionId + " not loaded, no action needed");
+        }
     }
     
     @Override
