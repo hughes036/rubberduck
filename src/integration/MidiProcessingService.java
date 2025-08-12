@@ -375,21 +375,8 @@ public class MidiProcessingService {
      */
     public MidiVisualizationService.MidiVisualizationData getVisualizationDataFromMemory(String serializedMidi) {
         try {
-            // Create a temporary file to pass to the visualization service
-            // Note: This is a temporary workaround until we enhance MidiVisualizationService for in-memory data
-            java.io.File tempFile = java.io.File.createTempFile("temp_midi_viz", ".mid");
-            tempFile.deleteOnExit();
-            
-            // Deserialize to file temporarily
-            midi.MidiDeserializer.deserializeToMidiFile(serializedMidi, tempFile);
-            
-            // Get visualization data
-            MidiVisualizationService.MidiVisualizationData data = MidiVisualizationService.extractVisualizationData(tempFile.getAbsolutePath());
-            
-            // Clean up temp file
-            tempFile.delete();
-            
-            return data;
+            // Use the enhanced MidiVisualizationService that works directly with serialized data
+            return MidiVisualizationService.extractVisualizationDataFromMemory(serializedMidi);
         } catch (Exception e) {
             System.err.println("Error getting visualization data from memory: " + e.getMessage());
             return null;
