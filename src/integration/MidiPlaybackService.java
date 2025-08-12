@@ -3,6 +3,7 @@ package integration;
 import midi.MidiPlayer;
 import javax.sound.midi.InvalidMidiDataException;
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * Service for managing MIDI playback with UI integration.
@@ -146,6 +147,17 @@ public class MidiPlaybackService implements MidiPlayer.PlaybackListener {
      * @return true if now playing, false if paused
      */
     public boolean playPauseInMemory(String serializedMidi, String sessionId) {
+        // Input validation - fail fast if parameters are invalid
+        Objects.requireNonNull(serializedMidi, "serializedMidi cannot be null");
+        Objects.requireNonNull(sessionId, "sessionId cannot be null");
+        
+        if (serializedMidi.trim().isEmpty()) {
+            throw new IllegalArgumentException("serializedMidi cannot be empty");
+        }
+        if (sessionId.trim().isEmpty()) {
+            throw new IllegalArgumentException("sessionId cannot be empty");
+        }
+        
         try {
             boolean sessionAlreadyLoaded = player.isSessionLoaded(sessionId);
             System.out.println("🔍 DEBUG: playPauseInMemory called for session " + sessionId);
