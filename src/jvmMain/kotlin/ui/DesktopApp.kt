@@ -247,8 +247,8 @@ fun RubberDuckDesktopApp() {
                 }
                 
                 // Stop playback if any files from this row are playing
-                row.inputFile?.let { if (it.isPlaying) playbackService.stop(it.path) }
-                row.outputFile?.let { if (it.isPlaying) playbackService.stop(it.path) }
+                row.inputFile?.let { if (it.isPlaying) playbackService.stopFile(it) }
+                row.outputFile?.let { if (it.isPlaying) playbackService.stopFile(it) }
                 
                 // Remove row and renumber remaining rows
                 val remainingRows = appState.rows.filter { it.id != rowId }
@@ -278,8 +278,8 @@ fun RubberDuckDesktopApp() {
                 }
                 
                 // Stop all playback
-                row.inputFile?.let { if (it.isPlaying) playbackService.stop(it.path) }
-                row.outputFile?.let { if (it.isPlaying) playbackService.stop(it.path) }
+                row.inputFile?.let { if (it.isPlaying) playbackService.stopFile(it) }
+                row.outputFile?.let { if (it.isPlaying) playbackService.stopFile(it) }
             }
             
             // Clear all rows
