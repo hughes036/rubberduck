@@ -101,8 +101,21 @@ public class MidiVisualizationService {
             // Calculate ticks per second
             double ticksPerSecond = (resolution * 120.0) / 60.0; // Assume 120 BPM default
             
-            int minNote = 127;
-            int maxNote = 0;
+            int minNote = Integer.MAX_VALUE;
+            int maxNote = Integer.MIN_VALUE;
+            
+            // Process all tracks
+            Track[] tracks = sequence.getTracks();
+            for (Track track : tracks) {
+                // ... processing ...
+            }
+            
+            // Validate note range after processing
+            if (minNote == Integer.MAX_VALUE || maxNote == Integer.MIN_VALUE) {
+                // No notes found, use default range
+                minNote = 60; // Middle C
+                maxNote = 72; // C5
+            }
             
             // Process all tracks
             Track[] tracks = sequence.getTracks();
