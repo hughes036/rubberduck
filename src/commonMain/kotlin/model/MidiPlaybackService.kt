@@ -37,9 +37,7 @@ interface MidiPlaybackService {
      * Plays or pauses serialized MIDI data (to be implemented by JVM service)
      */
     fun playPauseInMemory(serializedMidi: String, sessionId: String): Boolean {
-        // Default implementation falls back to file-based playback
-        // JVM implementation will override this
-        return false
+        throw UnsupportedOperationException("In-memory playback not supported on this platform")
     }
     
     /**
