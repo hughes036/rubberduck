@@ -202,7 +202,7 @@ public class MidiProcessingService {
                 System.out.println("🔍 DEBUG: No input file provided, using hardcoded MIDI example");
                 serializedMidi = getHardcodedMidiExample();
                 System.out.println("🔍 DEBUG: Using hardcoded MIDI example, length: " + serializedMidi.length() + " characters");
-            }            // Create full prompt with serialized MIDI data
+            } // Create full prompt with serialized MIDI data
             String fullPrompt = buildPrompt(serializedMidi, prompt);
             System.out.println("🔍 DEBUG: Full prompt created, length: " + fullPrompt.length() + " characters");
             
