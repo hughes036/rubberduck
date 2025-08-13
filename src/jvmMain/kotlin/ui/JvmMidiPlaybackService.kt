@@ -59,7 +59,7 @@ class JvmMidiPlaybackService(private val processingService: MidiProcessingServic
     /**
      * Get visualization data for in-memory MIDI
      */
-    fun getVisualizationDataFromMemory(serializedMidi: String): MidiVisualizationData? {
+    private fun getVisualizationDataFromMemory(serializedMidi: String): MidiVisualizationData? {
         return try {
             val javaData = processingService.getVisualizationDataFromMemory(serializedMidi)
             convertJavaVisualizationData(javaData)
