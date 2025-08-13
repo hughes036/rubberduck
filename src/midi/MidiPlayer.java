@@ -205,8 +205,12 @@ public class MidiPlayer {
      */
     public boolean isFileLoaded(String filePath) {
         if (currentFile == null) return false;
-        File file = new File(filePath);
-        return currentFile.equals(file.getName());
+        try {
+            File file = new File(filePath);
+            return currentFile.equals(file.getCanonicalPath());
+        } catch (IOException e) {
+            return false;
+        }
     }
     
     /**
