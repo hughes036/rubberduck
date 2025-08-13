@@ -520,10 +520,20 @@ fun MidiRowComponent(
                 midiFile = row.inputFile,
                 label = "Input MIDI",
                 onPlayPause = { midiFile ->
-                    println("🔍 DEBUG: Play/Pause clicked for input file")
-                    println("  Current isPlaying: ${midiFile.isPlaying}")
-                    println("  Is in-memory: ${midiFile.isInMemory}")
-                    println("  Will toggle to: ${!midiFile.isPlaying}")
+// At the top of src/commonMain/kotlin/ui/RubberDuckUI.kt
+private const val DEBUG = false // Set to true during development
+
+private inline fun debugLog(message: () -> String) {
+    if (DEBUG) println(message())
+}
+
+// … later in the file, inside your builder or composable:
+
+                onPlayPause = { midiFile ->
+                    debugLog { "🔍 DEBUG: Play/Pause clicked for input file" }
+                    debugLog { "  Current isPlaying: ${midiFile.isPlaying}" }
+                    debugLog { "  Is in-memory: ${midiFile.isInMemory}" }
+                    debugLog { "  Will toggle to: ${!midiFile.isPlaying}" }
                     
                     // Use smart playback method that handles both file and in-memory
                     val nowPlaying = playbackService.playPauseFile(midiFile)
