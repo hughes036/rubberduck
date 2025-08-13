@@ -101,7 +101,7 @@ class JvmMidiPlaybackService(private val processingService: MidiProcessingServic
             processingService.allApiKeys
         } catch (e: Exception) {
             println("Error getting API keys: ${e.message}")
-            emptyMap()
+            throw e
         }
     }
     
