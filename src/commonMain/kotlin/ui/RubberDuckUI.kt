@@ -197,10 +197,9 @@ fun ApiKeyConfigDialog(
     onDismiss: () -> Unit,
     onSaved: () -> Unit
 ) {
-    var apiKeys by remember { mutableStateOf(playbackService.getAllApiKeys()) }
+    var apiKeys by remember { mutableStateOf(playbackService.getAllApiKeys() ?: emptyMap()) }
     var isSaving by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
