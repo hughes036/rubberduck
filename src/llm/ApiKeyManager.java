@@ -51,7 +51,7 @@ public class ApiKeyManager {
                     return false;
                 }
                 // Filter out placeholder values like "YOUR_*_API_KEY_HERE"
-                return !value.matches("YOUR_.*_API_KEY_HERE");
+                return !PLACEHOLDER_API_KEY_PATTERN.matcher(value).matches();
             })
             .map(Map.Entry::getKey)
             .collect(Collectors.toSet());
