@@ -61,7 +61,7 @@ interface MidiPlaybackService {
      * Stops in-memory MIDI playback (to be implemented by JVM service)
      */
     fun stopInMemory(sessionId: String) {
-        // Default implementation - JVM implementation will override this
+        throw UnsupportedOperationException("In-memory stop not supported on this platform")
     }
     
     /**
