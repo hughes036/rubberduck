@@ -326,6 +326,7 @@ private suspend fun processRow(
         val inputSerializedMidi = if (row.inputFile != null && row.inputFile.isInMemory) {
             // Use in-memory data
             row.inputFile.serializedMidiData
+                ?: throw IllegalStateException("In-memory MIDI file has no serialized data")
         } else if (row.inputFile != null) {
             // Read from file and serialize
             midi.MidiSerializer.serializeMidiFile(File(row.inputFile.path))
