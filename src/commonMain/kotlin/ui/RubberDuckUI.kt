@@ -760,7 +760,7 @@ fun MidiFileSection(
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "� Export",
+                                text = "💾 Export",
                                 style = MaterialTheme.typography.labelSmall
                             )
                         }
