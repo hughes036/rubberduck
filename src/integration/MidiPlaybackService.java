@@ -47,6 +47,9 @@ public class MidiPlaybackService implements MidiPlayer.PlaybackListener {
                 System.out.println("  File already loaded, skipping loadFile to preserve position");
             }
             // If same file is already loaded, don't call loadFile to preserve position
+            } else {
+                System.out.println("  File already loaded, skipping loadFile to preserve position");
+            }
             
             // Toggle play/pause
             if (player.isPlaying()) {
