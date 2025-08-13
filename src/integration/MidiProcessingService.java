@@ -44,81 +44,82 @@ public class MidiProcessingService {
         String llmService
     ) {
         try {
-            System.out.println("🔍 DEBUG: processWithLLMInMemory called");
-            System.out.println("  Input MIDI length: " + (inputSerializedMidi != null ? inputSerializedMidi.length() : "null"));
-            System.out.println("  Prompt: " + prompt);
-            System.out.println("  LLM service: " + llmService);
-            
-            // Load API keys using static method
-            System.out.println("🔍 DEBUG: Attempting to load API key for: " + llmService);
-            String apiKey = ApiKeyManager.getApiKey(llmService);
-            System.out.println("🔍 DEBUG: API key loaded: " + (apiKey != null ? "YES (length=" + apiKey.length() + ")" : "NO"));
-            
-            if (apiKey == null) {
-                String errorMsg = "API key not found for service: " + llmService;
-                System.out.println("❌ ERROR: " + errorMsg);
-                return ProcessingResult.failure(new Exception(errorMsg));
-            }
-
-            // Create LLM service based on selection
-            System.out.println("🔍 DEBUG: Creating LLM service for: " + llmService);
-            LLMService service;
-            switch (llmService.toLowerCase()) {
-                case "gemini":
-                    System.out.println("🔍 DEBUG: Creating Gemini service with API key");
-                    String originalGoogleApiKey = System.getProperty("GOOGLE_API_KEY");
-                    System.setProperty("GOOGLE_API_KEY", apiKey);
-                    try {
-                        service = LLMServiceFactory.createService("gemini", apiKey);
-                    } finally {
-                        if (originalGoogleApiKey != null) {
-                            System.setProperty("GOOGLE_API_KEY", originalGoogleApiKey);
-                        } else {
-                            System.clearProperty("GOOGLE_API_KEY");
-                        }
-                    }
-                    break;
-                case "gpt4":
-                    System.out.println("🔍 DEBUG: Creating GPT-4 service with API key");
-                    service = LLMServiceFactory.createService("gpt4", apiKey);
-                    break;
-                case "claude":
-                    System.out.println("🔍 DEBUG: Creating Claude service with API key");
-                    service = LLMServiceFactory.createService("claude", apiKey);
-                    break;
-                default:
-                    String errorMsg = "Unsupported LLM service: " + llmService;
-                    System.out.println("❌ ERROR: " + errorMsg);
-                    return ProcessingResult.failure(new Exception(errorMsg));
-            }
-
-            // Use provided serialized MIDI or hardcoded example
-            String serializedMidi = (inputSerializedMidi != null) ? inputSerializedMidi : getHardcodedMidiExample();
-            System.out.println("🔍 DEBUG: Using MIDI data, length: " + serializedMidi.length() + " characters");
-            
-            // Create full prompt with serialized MIDI data
-            String fullPrompt = buildPrompt(serializedMidi, prompt);
-            System.out.println("🔍 DEBUG: Full prompt created, length: " + fullPrompt.length() + " characters");
-            
-            // Get LLM response (this returns modified MIDI data)
-            System.out.println("🔍 DEBUG: Sending request to LLM service...");
-            String llmResponse = service.processCompositionRequest(fullPrompt);
-            System.out.println("🔍 DEBUG: LLM response received, length: " + llmResponse.length() + " characters");
-            
-            // Extract serialized MIDI data from LLM response
-            System.out.println("🔍 DEBUG: Extracting serialized MIDI data from LLM response...");
-            String extractedMidi = PromptBuilder.extractSerializedMidi(llmResponse);
-            System.out.println("🔍 DEBUG: Extracted MIDI data, length: " + extractedMidi.length() + " characters");
-            
-            String successMsg = "Successfully processed MIDI data in memory. Result length: " + extractedMidi.length() + " characters";
-            System.out.println("✅ SUCCESS: " + successMsg);
-            return ProcessingResult.success(extractedMidi); // Return the serialized MIDI data instead of file path
-        } catch (Exception e) {
-            String errorMsg = "Error processing MIDI: " + e.getMessage();
-            System.out.println("❌ ERROR: " + errorMsg);
-            e.printStackTrace();
-            return ProcessingResult.failure(e);
-        }
+--- a/src/integration/MidiProcessingService.java
++++ b/src/integration/MidiProcessingService.java
+@@ processWithLLMInMemory(...) (around line  seventy-odd)
+-            // Create LLM service based on selection
+-            System.out.println("🔍 DEBUG: Creating LLM service for: " + llmService);
+-            LLMService service;
+-            switch (llmService.toLowerCase()) {
+-                case "gemini":
+-                    System.out.println("🔍 DEBUG: Creating Gemini service with API key");
+-                    String originalGoogleApiKey = System.getProperty("GOOGLE_API_KEY");
+-                    System.setProperty("GOOGLE_API_KEY", apiKey);
+-                    try {
+-                        service = LLMServiceFactory.createService("gemini", apiKey);
+-                    } finally {
+-                        if (originalGoogleApiKey != null) {
+-                            System.setProperty("GOOGLE_API_KEY", originalGoogleApiKey);
+-                        } else {
+-                            System.clearProperty("GOOGLE_API_KEY");
+-                        }
+-                    }
+-                    break;
+-                case "gpt4":
+-                    System.out.println("🔍 DEBUG: Creating GPT-4 service with API key");
+-                    service = LLMServiceFactory.createService("gpt4", apiKey);
+-                    break;
+-                case "claude":
+-                    System.out.println("🔍 DEBUG: Creating Claude service with API key");
+-                    service = LLMServiceFactory.createService("claude", apiKey);
+-                    break;
+-                default:
+-                    String errorMsg = "Unsupported LLM service: " + llmService;
+-                    System.out.println("❌ ERROR: " + errorMsg);
+-                    return ProcessingResult.failure(new Exception(errorMsg));
+-            }
++            // Delegate to helper to eliminate duplication
++            LLMService service = createLLMService(llmService, apiKey);
+ 
+             // Use provided serialized MIDI or hardcoded example
+             String serializedMidi = (inputSerializedMidi != null) ? inputSerializedMidi : getHardcodedMidiExample();
+@@ class level (add near the bottom)
++    /**
++     * Centralize LLMService creation with API-key wiring.
++     */
++    private LLMService createLLMService(String llmService, String apiKey) throws Exception {
++        System.out.println("🔍 DEBUG: Creating LLM service for: " + llmService);
++        LLMService service;
++        switch (llmService.toLowerCase()) {
++            case "gemini":
++                System.out.println("🔍 DEBUG: Creating Gemini service with API key");
++                String originalGoogleApiKey = System.getProperty("GOOGLE_API_KEY");
++                System.setProperty("GOOGLE_API_KEY", apiKey);
++                try {
++                    service = LLMServiceFactory.createService("gemini", apiKey);
++                } finally {
++                    if (originalGoogleApiKey != null) {
++                        System.setProperty("GOOGLE_API_KEY", originalGoogleApiKey);
++                    } else {
++                        System.clearProperty("GOOGLE_API_KEY");
++                    }
++                }
++                break;
++            case "gpt4":
++                System.out.println("🔍 DEBUG: Creating GPT-4 service with API key");
++                service = LLMServiceFactory.createService("gpt4", apiKey);
++                break;
++            case "claude":
++                System.out.println("🔍 DEBUG: Creating Claude service with API key");
++                service = LLMServiceFactory.createService("claude", apiKey);
++                break;
++            default:
++                String errorMsg = "Unsupported LLM service: " + llmService;
++                System.out.println("❌ ERROR: " + errorMsg);
++                throw new Exception(errorMsg);
++        }
++        return service;
++    }
     }
 
     public ProcessingResult processWithLLM(
