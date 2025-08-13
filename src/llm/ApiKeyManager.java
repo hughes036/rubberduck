@@ -72,7 +72,7 @@ public class ApiKeyManager {
             return false;
         }
         // Filter out placeholder values like "YOUR_*_API_KEY_HERE"
-        return !key.matches("YOUR_.*_API_KEY_HERE");
+        return !key.matches(PLACEHOLDER_API_KEY_PATTERN);
     }
     
     /**
