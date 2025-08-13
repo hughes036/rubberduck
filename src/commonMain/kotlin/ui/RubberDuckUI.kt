@@ -74,6 +74,13 @@ fun DrawScope.drawActualMidiNotes(
         drawSimulatedMidiNotes(width, height, noteColor, currentPosition, midiFile.duration)
         return
     }
+
+    // Validate note range
+    if (visualizationData.minNote > visualizationData.maxNote) {
+        // Invalid range, use fallback
+        drawSimulatedMidiNotes(width, height, noteColor, currentPosition, midiFile.duration)
+        return
+    }
     
     val noteRange = visualizationData.maxNote - visualizationData.minNote
     val noteHeight = if (noteRange > 0) height / noteRange else height / 12
@@ -87,17 +94,22 @@ fun DrawScope.drawActualMidiNotes(
         noteColor.copy(green = noteColor.green * 0.8f),
         noteColor.copy(blue = noteColor.blue * 0.8f)
     )
-    
+
     visualizationData.noteEvents.forEach { noteEvent ->
         if (duration > 0) {
+            // Validate note number is within MIDI range
+            if (noteEvent.noteNumber < 0 || noteEvent.noteNumber > 127) {
+                return@forEach
+            }
+
             val startX = (noteEvent.startTimeSeconds / duration * width).toFloat()
             val noteWidth = ((noteEvent.endTimeSeconds - noteEvent.startTimeSeconds) / duration * width).toFloat()
             val normalizedNote = noteEvent.noteNumber - visualizationData.minNote
             val y = height - (normalizedNote * noteHeight) - noteHeight
             
             // Make notes currently playing more prominent
-            val isCurrentlyPlaying = currentPosition >= noteEvent.startTimeSeconds && 
-                                   currentPosition <= noteEvent.endTimeSeconds
+            val isCurrentlyPlaying = currentPosition >= noteEvent.startTimeSeconds &&
+                                    currentPosition <= noteEvent.endTimeSeconds
             val baseAlpha = (noteEvent.velocity / 127f).coerceIn(0.3f, 1.0f)
             val alpha = if (isCurrentlyPlaying) baseAlpha else baseAlpha * 0.6f
             
