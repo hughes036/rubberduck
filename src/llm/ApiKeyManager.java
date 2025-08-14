@@ -35,7 +35,8 @@ public class ApiKeyManager {
     }
     
     /**
-     * Gets all available LLM service names that have non-empty API keys.
+     * Gets all available LLM service names that have valid API keys.
+     * Filters out empty values and placeholder values like "YOUR_*_API_KEY_HERE".
      * 
      * @return a set of service names with configured API keys
      * @throws IOException if API key files cannot be read
@@ -44,22 +45,34 @@ public class ApiKeyManager {
         Map<String, String> apiKeys = loadApiKeys();
         
         return apiKeys.entrySet().stream()
-            .filter(entry -> entry.getValue() != null && !entry.getValue().trim().isEmpty())
+            .filter(entry -> {
+                String value = entry.getValue();
+                if (value == null || value.trim().isEmpty()) {
+                    return false;
+                }
+                // Filter out placeholder values like "YOUR_*_API_KEY_HERE"
+                return !value.matches("YOUR_.*_API_KEY_HERE");
+            })
             .map(Map.Entry::getKey)
             .collect(Collectors.toSet());
     }
     
     /**
-     * Checks if the specified LLM service is configured with an API key.
+     * Checks if the specified LLM service is configured with a valid API key.
+     * Filters out empty values and placeholder values like "YOUR_*_API_KEY_HERE".
      * 
      * @param serviceName the name of the LLM service
-     * @return true if the service has a non-empty API key configured
+     * @return true if the service has a valid API key configured
      * @throws IOException if API key files cannot be read
      */
     public static boolean isServiceAvailable(String serviceName) throws IOException {
         Map<String, String> apiKeys = loadApiKeys();
         String key = apiKeys.get(serviceName.toLowerCase());
-        return key != null && !key.trim().isEmpty();
+        if (key == null || key.trim().isEmpty()) {
+            return false;
+        }
+        // Filter out placeholder values like "YOUR_*_API_KEY_HERE"
+        return !key.matches("YOUR_.*_API_KEY_HERE");
     }
     
     /**
@@ -86,14 +99,26 @@ public class ApiKeyManager {
     /**
      * Loads API keys from environment variables as a secure fallback.
      * Looks for standard environment variable names for each service.
+     * Also checks system properties as a fallback for GUI applications.
      */
     private static Map<String, String> loadApiKeysFromEnvironment() throws IOException {
         Map<String, String> apiKeys = new HashMap<>();
         
-        // Standard environment variable mappings
+        // Standard environment variable mappings (check both env vars and system properties)
         String geminiKey = System.getenv("GOOGLE_API_KEY");
+        if (geminiKey == null || geminiKey.trim().isEmpty()) {
+            geminiKey = System.getProperty("GOOGLE_API_KEY");
+        }
+        
         String gpt4Key = System.getenv("OPENAI_API_KEY");
+        if (gpt4Key == null || gpt4Key.trim().isEmpty()) {
+            gpt4Key = System.getProperty("OPENAI_API_KEY");
+        }
+        
         String claudeKey = System.getenv("ANTHROPIC_API_KEY");
+        if (claudeKey == null || claudeKey.trim().isEmpty()) {
+            claudeKey = System.getProperty("ANTHROPIC_API_KEY");
+        }
         
         if (geminiKey != null && !geminiKey.trim().isEmpty()) {
             apiKeys.put("gemini", geminiKey);
@@ -124,5 +149,45 @@ public class ApiKeyManager {
     public static String getApiKey(String serviceName) throws IOException {
         Map<String, String> apiKeys = loadApiKeys();
         return apiKeys.get(serviceName.toLowerCase());
+    }
+    
+    /**
+     * Saves the API keys to the apikeys.json file.
+     * 
+     * @param apiKeys map of service names to API keys
+     * @throws IOException if the file cannot be written
+     */
+    public static void saveApiKeys(Map<String, String> apiKeys) throws IOException {
+        Path jsonFile = Paths.get(API_KEYS_JSON_FILE);
+        ObjectMapper mapper = new ObjectMapper();
+        
+        // Pretty print the JSON
+        String jsonContent = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(apiKeys);
+        Files.writeString(jsonFile, jsonContent);
+    }
+    
+    /**
+     * Updates a specific API key and saves the configuration.
+     * 
+     * @param serviceName the service name
+     * @param apiKey the API key (can be null or empty to remove)
+     * @throws IOException if the configuration cannot be saved
+     */
+    public static void updateApiKey(String serviceName, String apiKey) throws IOException {
+        Map<String, String> apiKeys;
+        try {
+            apiKeys = loadApiKeys();
+        } catch (IOException e) {
+            // If no existing file, create new map
+            apiKeys = new HashMap<>();
+        }
+        
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            apiKeys.remove(serviceName.toLowerCase());
+        } else {
+            apiKeys.put(serviceName.toLowerCase(), apiKey.trim());
+        }
+        
+        saveApiKeys(apiKeys);
     }
 }
